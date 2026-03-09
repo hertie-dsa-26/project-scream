@@ -156,11 +156,11 @@ the [BRFSS Codebook](https://www.cdc.gov/brfss/annual_data/2024/llcp-codebook24.
 
 ## How To Add Variables
 
-1. Open `pipeline/subset.py`
+1. Open `pipeline/Subsetting.py`
 2. Find the right category dictionary (or create a new one)
 3. Add an entry: `"BRFSS_CODE": "your_clean_name"`
 4. If you made a new dict, add it to the `RENAME_MAP` loop
-5. Re-run: `uv run python run_pipeline.py subset`
+5. Re-run: `uv run python pipeline/Subsetting.py`
 6. Update this README with the new variable
 
 The BRFSS codebook is in `data/raw/` or online at the CDC site.
