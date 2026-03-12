@@ -17,7 +17,8 @@
 8. [Project Structure](#8-project-structure)
 9. [Python & Environment Setup](#9-python--environment-setup)
 10. [Testing](#10-testing)
-11. [Common Git Commands Cheat Sheet](#11-common-git-commands-cheat-sheet)
+11. [Using AI Tools (Copilot)](#11-using-ai-tools-copilot)
+12. [Common Git Commands Cheat Sheet](#12-common-git-commands-cheat-sheet)
 
 ---
 
@@ -372,7 +373,31 @@ def test_load_data_has_expected_columns():
 
 ---
 
-## 11. Common Git Commands Cheat Sheet
+## 11. Using AI Tools (Copilot)
+
+GitHub Copilot and other AI assistants can be very helpful for exploring unfamiliar code, debugging errors, understanding documentation, or generating boilerplate. **Use them — but use them responsibly.**
+
+### Guidelines
+
+| Do | Don't |
+|----|-------|
+| Use Copilot to understand error messages or unfamiliar syntax | Blindly copy-paste generated code without reading it |
+| Ask it to explain how a function or library works | Push AI-generated code you don't fully understand |
+| Use it to draft tests, docstrings, or boilerplate | Let it write your entire ML-from-scratch implementation (that defeats the assignment) |
+| Use it to help debug and find issues faster | Assume the output is always correct — it often isn't |
+
+### Before you push AI-assisted code, ask yourself:
+
+1. **Do I understand every line?** If someone asks you in a review what this code does, can you explain it?
+2. **Did I test it?** AI-generated code can look right but behave wrong.
+3. **Does it fit our project structure?** Copilot doesn't know our conventions — make sure the code follows the patterns in this guide.
+4. **Is it actually my work?** The professor grades your understanding. Using AI to learn is fine; using it as a substitute for learning is not.
+
+> **Bottom line:** Copilot is a tool like a calculator — great for speeding things up, dangerous if you don't understand the math behind it. Use it to learn and move faster, not to skip the learning.
+
+---
+
+## 12. Common Git Commands Cheat Sheet
 
 | What you want to do | Command |
 |---------------------|---------|
