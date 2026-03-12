@@ -19,4 +19,4 @@ build/
 .idea/
 
 # === Data (large files) ===
-data/LLCP2024.XPT
+data/
