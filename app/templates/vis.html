@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+
+{% block title %}Visualization Demo{% endblock %}
+
+{% block content %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+ 
+<h1>Depression Survey Data</h1>
+<p style="color: var(--muted); margin-bottom: 2rem; font-size: 0.9rem;">BRFSS 2024 — Response Distribution</p>
+ 
+<div id="chart1" style="width: 100%; height: 450px;"></div>
+ 
+<script>
+    var fig = {{ chart1 | safe }};
+    Plotly.newPlot('chart1', fig.data, fig.layout, {responsive: true});
+</script>
+ 
+{% endblock %}
