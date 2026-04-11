@@ -1,13 +1,13 @@
 from flask import Blueprint, render_template
-import pandas as pd
 import plotly.graph_objs as go
 import plotly, json
+from app.utils.data import load_brfss
 
 vis_bp = Blueprint('vis', __name__)
 
 @vis_bp.route('/vis')
 def vis():
-    df = pd.read_parquet("../data/subsets/brfss2024_subset.parquet")
+    df = load_brfss()
 
     # --- Data prep (same logic as notebook) ---
     depression_labels = {1: "Yes", 2: "No", 7: "Don't know/Not sure", 9: "Refused"}
