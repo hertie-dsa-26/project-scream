@@ -164,3 +164,37 @@ the [BRFSS Codebook](https://www.cdc.gov/brfss/annual_data/2024/llcp-codebook24.
 6. Update this README with the new variable
 
 The BRFSS codebook is in `data/raw/` or online at the CDC site.
+
+
+
+Problem Definition: 
+ 
+
+We are predicting the probability of having diabetes depending on the features that we have. 
+High amount of diabetes and obesity in the US since we are using data from the US. 
+
+In a medical setting such as this, false negatives are more critical than overall accuracy, since failing to identify individuals who actually have diabetes carries a significantly higher cost than incorrectly flagging someone as at risk.
+
+
+We have decided to look into XGBoost(Extreme Gradient Boosting) model, Random Forest, SVM, LightGBM (or Gradient Boosting variants), Logistic Regression (baseline but important)
+
+Papers where machine learning was used to predict diabetes using similar features:
+
+1. https://www.mdpi.com/2075-4418/15/20/2622
+2.https://www.researchgate.net/publication/389648378_A_Comparative_Study_of_Diabetes_Prediction_Based_on_Lifestyle_Factors_Using_Machine_Learning
+
+3. https://www.researchgate.net/publication/395238407_AI-driven_analysis_of_diabetes_risk_determinants_in_US_adults_Exploring_disease_prevalence_and_health_factors#:~:text=BMI%2C%20age%2C%20general-,health%20status%2C%20income%2C%20physical%20health%20days%2C%20and%20education%20as,those%20reporting%20poor%20general%20health.
+
+4. https://pmc.ncbi.nlm.nih.gov/articles/PMC12669510/#:~:text=The%20survey's%20comprehensive%20scope%20includes,11
+
+5. https://pmc.ncbi.nlm.nih.gov/articles/PMC12669510/#:~:text=The%20survey's%20comprehensive%20scope%20includes,11
+a
+
+6. https://www.researchgate.net/publication/396643677_Diabetes_Prediction_Using_Feature_Selection_Algorithms_and_Boosting-Based_Machine_Learning_Classifiers
+7. https://pmc.ncbi.nlm.nih.gov/articles/PMC12669510/
+8. https://www.researchgate.net/publication/401155832_Identification_of_key_cardiovascular_disease_predictive_factors_from_the_China_Health_and_Retirement_Longitudinal_Study_dataset_using_machine_learning-based_algorithms
+9. https://pmc.ncbi.nlm.nih.gov/articles/PMC10107388/
+10. https://www.researchgate.net/publication/364739441_Cardiovascular_and_Diabetes_Diseases_Classification_Using_Ensemble_Stacking_Classifiers_with_SVM_as_a_Meta_Classifier
+11. https://bmjopen.bmj.com/content/15/3/e096595
+
+
