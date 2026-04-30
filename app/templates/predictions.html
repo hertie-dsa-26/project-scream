@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+
+{% block title %}Predictions — SCREAM{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<h1>Predictions</h1>
+<p style="color: var(--muted); margin-top: 0.5rem; font-size: 0.9rem;">
+    State-level model output — geographic risk estimates from BRFSS 2024.
+</p>
+
+<div id="pred-map" style="width: 100%; height: 480px; margin-top: 1.5rem;"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var mapData = {{ map_json | safe }};
+    Plotly.newPlot('pred-map', mapData.data, mapData.layout, {
+        responsive: true,
+        displayModeBar: false
+    });
+</script>
+{% endblock %}

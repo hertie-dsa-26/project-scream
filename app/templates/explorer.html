@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block title %}Explorer — SCREAM{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<h1>Data Explorer</h1>
+<p style="color: var(--muted); margin-top: 0.5rem; font-size: 0.9rem;">
+    Browse and filter the BRFSS 2024 dataset.
+</p>
+
+{% if error %}
+<div style="margin-top:2rem; padding:1rem; background:#fee2e2; border:1px solid #fecaca; border-radius:6px; color:#991b1b; font-size:0.875rem;">
+    Data not available: {{ error }}<br>
+    <span style="color:var(--muted);">Download the BRFSS 2024 parquet and place it at <code>data/subsets/brfss2024_subset.parquet</code>.</span>
+</div>
+{% elif chart1 %}
+<div id="chart1" style="margin-top: 1.5rem;"></div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if chart1 %}
+<script>
+    var chart1Data = {{ chart1 | safe }};
+    Plotly.newPlot('chart1', chart1Data.data, chart1Data.layout, { responsive: true });
+</script>
+{% endif %}
+{% endblock %}

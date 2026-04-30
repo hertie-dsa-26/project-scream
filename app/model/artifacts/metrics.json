@@ -1,0 +1,23 @@
+{
+  "roc_auc": 0.7776,
+  "accuracy": 0.8482,
+  "n_train": 365308,
+  "n_test": 91328,
+  "positive_rate": 0.1516,
+  "confusion_matrix": [
+    [
+      76426,
+      1061
+    ],
+    [
+      12802,
+      1039
+    ]
+  ],
+  "numeric_medians": {
+    "age_imputed": 58.0,
+    "bmi_x100": 2744.0,
+    "height_inches": 67.0,
+    "weight_kg": 8074.0
+  }
+}

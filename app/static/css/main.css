@@ -92,3 +92,43 @@ li {
     color: #1e40af;
 }
 .flash.error { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
+
+/* Metric cards (details page) */
+.metrics-row {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    min-width: 160px;
+    flex: 1;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+}
+
+.metric-note {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.4;
+}

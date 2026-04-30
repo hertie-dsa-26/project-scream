@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+
+{% block title %}Details — SCREAM{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<h1>Model Details</h1>
+<p style="color: var(--muted); margin-top: 0.5rem; font-size: 0.9rem;">
+    Logistic regression trained on 365,000 BRFSS 2024 respondents. Target: diabetes diagnosis.
+</p>
+
+{% if error %}
+<div style="margin-top:2rem; padding:1rem; background:#fee2e2; border:1px solid #fecaca; border-radius:6px; color:#991b1b; font-size:0.875rem;">
+    {{ error }}
+</div>
+{% else %}
+
+<div class="metrics-row">
+    <div class="metric-card">
+        <div class="metric-value">{{ metrics.roc_auc }}</div>
+        <div class="metric-label">ROC-AUC</div>
+        <div class="metric-note">Model correctly ranks {{ (metrics.roc_auc * 100)|int }}% of patient pairs</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-value">{{ (metrics.accuracy * 100)|round(1) }}%</div>
+        <div class="metric-label">Accuracy</div>
+        <div class="metric-note">Note: dataset is imbalanced ({{ (metrics.positive_rate * 100)|round(1) }}% positive)</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-value">{{ "{:,}".format(metrics.n_train) }}</div>
+        <div class="metric-label">Training rows</div>
+        <div class="metric-note">Tested on {{ "{:,}".format(metrics.n_test) }} held-out respondents</div>
+    </div>
+</div>
+
+<h2 style="margin-top: 2.5rem; font-size: 1.1rem; font-weight: 500;">Odds Ratios</h2>
+<p style="color: var(--muted); font-size: 0.875rem; margin-bottom: 1rem;">
+    Red bars increase diabetes risk (OR > 1). Blue bars reduce it. Dashed line = no effect.
+    Only statistically significant predictors shown (p &lt; 0.05).
+</p>
+<div id="or-chart"></div>
+
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if chart_json %}
+<script>
+    var orData = {{ chart_json | safe }};
+    Plotly.newPlot('or-chart', orData.data, orData.layout, { responsive: true, displayModeBar: false });
+</script>
+{% endif %}
+{% endblock %}

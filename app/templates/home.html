@@ -10,73 +10,134 @@
 {% block content %}
 <div class="story-container">
 
-    <!-- Left: scrolling text chapters -->
     <div class="story-text" id="story-steps">
 
         <div class="step" data-step="0">
             <div class="step-content">
                 <h2>Diabetes across the United States</h2>
-                <p>
-                    The BRFSS 2024 survey captures health data from over 400,000 Americans.
-                    Diabetes is one of the most prevalent chronic conditions —
-                    and its distribution is far from uniform.
-                </p>
+                <p>The BRFSS 2024 survey captures health data from over 400,000 Americans.
+                Diabetes is one of the most prevalent chronic conditions —
+                and its distribution is far from uniform.</p>
             </div>
         </div>
 
         <div class="step" data-step="1">
             <div class="step-content">
                 <h2>The Southern Belt</h2>
-                <p>
-                    States in the South consistently report higher diabetes rates.
-                    Historical patterns of poverty, food access, and healthcare
-                    coverage all play a role.
-                </p>
+                <p>States in the South consistently report higher diabetes rates.
+                Historical patterns of poverty, food access, and healthcare
+                coverage all play a role.</p>
             </div>
         </div>
 
         <div class="step" data-step="2">
             <div class="step-content">
                 <h2>Risk factors</h2>
-                <p>
-                    BMI, physical activity, smoking, and age are among the
-                    strongest predictors. The picture shifts when we look at
-                    who is most at risk — not just where they live.
-                </p>
+                <p>BMI, physical activity, smoking, and age are among the
+                strongest predictors. The picture shifts when we look at
+                who is most at risk — not just where they live.</p>
             </div>
         </div>
 
         <div class="step" data-step="3">
             <div class="step-content">
                 <h2>Predict your risk</h2>
-                <p>
-                    Using these patterns, we trained a model that estimates
-                    individual diabetes risk based on personal health indicators.
-                </p>
-                <a class="cta" href="{{ url_for('predict.predict') }}">Try the predictor →</a>
+                <p>Using these patterns, we trained a model that estimates
+                individual diabetes risk based on personal health indicators.</p>
+                <a class="cta" href="#predictor">Check your own risk ↓</a>
             </div>
         </div>
 
     </div>
 
-    <!-- Right: sticky map -->
     <div class="story-graphic">
         <div id="story-map"></div>
     </div>
 
 </div>
+
+<!-- ── Predictor section ── -->
+<section class="predictor-section" id="predictor">
+    <div class="predictor-inner">
+
+        <h2>Check your own risk</h2>
+        <p class="predictor-sub">Fill in a few health indicators. The model will estimate your diabetes risk in seconds.</p>
+
+        {% if error %}
+        <div class="model-error">{{ error }}</div>
+        {% endif %}
+
+        <form class="predict-form" method="POST" action="{{ url_for('home.home') }}#predictor">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" name="age" min="18" max="80"
+                           value="{{ form_values.get('age', '') }}" placeholder="e.g. 45" required>
+                </div>
+                <div class="form-group">
+                    <label for="bmi">BMI</label>
+                    <input type="number" id="bmi" name="bmi" min="10" max="70" step="0.1"
+                           value="{{ form_values.get('bmi', '') }}" placeholder="e.g. 27.5" required>
+                </div>
+            </div>
+
+            {% for field, options in form_options.items() %}
+            <div class="form-group">
+                <label for="{{ field }}">{{ field | replace('_', ' ') | title }}</label>
+                <select id="{{ field }}" name="{{ field }}" required>
+                    <option value="">Select…</option>
+                    {% for val, label in options %}
+                    <option value="{{ val }}"
+                        {% if form_values.get(field) == val|string %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endfor %}
+
+            <button type="submit">Estimate my risk</button>
+
+        </form>
+
+        {% if result is not none %}
+        <div class="risk-result">
+            <div class="risk-number">{{ result }}%</div>
+            <span class="risk-badge {{ risk_level }}">{{ risk_level | title }} risk</span>
+            <p class="risk-context">The average in this dataset is 15.2% — your result is model-based, not a diagnosis.</p>
+        </div>
+
+        {% if suggestions %}
+        <div class="wakeup-section">
+            <h3>What you can change</h3>
+            {% for s in suggestions %}
+            <div class="wakeup-card">
+                <div class="wakeup-body">
+                    <strong>{{ s.label }}</strong>
+                    <p class="tip">{{ s.tip }}</p>
+                </div>
+                {% if 'delta' in s %}
+                <div class="delta">−{{ s.delta }}pp → {{ s.new_prob }}%</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endif %}
+
+    </div>
+</section>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // --- Initial map render ---
     var mapData = {{ map_json | safe }};
     Plotly.newPlot('story-map', mapData.data, mapData.layout, {
         responsive: true,
         displayModeBar: false
     });
 
-    // Per-step map updates — swap titles (and later: data) as the story develops
     const stepUpdates = [
         { title: 'Diabetes prevalence by state — BRFSS 2024' },
         { title: 'Focus: the Southern Belt' },
@@ -84,7 +145,6 @@
         { title: 'Who is most at risk?' },
     ];
 
-    // --- Scrollama setup ---
     const scroller = scrollama();
     scroller
         .setup({ step: '.step', offset: 0.5 })
@@ -95,5 +155,11 @@
         });
 
     window.addEventListener('resize', scroller.resize);
+
+    {% if result is not none %}
+    window.addEventListener('load', function () {
+        document.getElementById('predictor').scrollIntoView({ behavior: 'smooth' });
+    });
+    {% endif %}
 </script>
 {% endblock %}

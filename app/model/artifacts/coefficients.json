@@ -1,0 +1,140 @@
+[
+  {
+    "feature": "general_health_5.0",
+    "coef": 1.9509176728706275,
+    "odds_ratio": 7.035140576915095,
+    "p_value": 0.0
+  },
+  {
+    "feature": "general_health_4.0",
+    "coef": 1.753366925573346,
+    "odds_ratio": 5.774010649186268,
+    "p_value": 0.0
+  },
+  {
+    "feature": "general_health_3.0",
+    "coef": 1.269128125837463,
+    "odds_ratio": 3.5577493000335005,
+    "p_value": 0.0
+  },
+  {
+    "feature": "age_imputed",
+    "coef": 0.6578690911125191,
+    "odds_ratio": 1.9306738578288127,
+    "p_value": 0.0
+  },
+  {
+    "feature": "general_health_2.0",
+    "coef": 0.6512504888820557,
+    "odds_ratio": 1.917937689835271,
+    "p_value": 1.1269475713284433e-141
+  },
+  {
+    "feature": "any_alcohol_past_30d_2.0",
+    "coef": 0.36961431164746955,
+    "odds_ratio": 1.4471763479502986,
+    "p_value": 6.676749988496747e-280
+  },
+  {
+    "feature": "weight_kg",
+    "coef": 0.22397876744237763,
+    "odds_ratio": 1.2510444562728555,
+    "p_value": 1.6731904391608938e-32
+  },
+  {
+    "feature": "any_physical_activity_2.0",
+    "coef": 0.19021404925300914,
+    "odds_ratio": 1.2095084643344527,
+    "p_value": 3.043134409082527e-64
+  },
+  {
+    "feature": "bmi_x100",
+    "coef": 0.17827619367448472,
+    "odds_ratio": 1.1951553700072335,
+    "p_value": 8.960901091433174e-27
+  },
+  {
+    "feature": "smoking_status_4.0",
+    "coef": 0.09625766595684242,
+    "odds_ratio": 1.1010427286752522,
+    "p_value": 4.5391473758700436e-07
+  },
+  {
+    "feature": "smoking_status_3.0",
+    "coef": 0.08365790931845572,
+    "odds_ratio": 1.0872568897324677,
+    "p_value": 2.7600778029472953e-05
+  },
+  {
+    "feature": "income_level_2.0",
+    "coef": 0.006215755943838072,
+    "odds_ratio": 1.0062351138420214,
+    "p_value": 0.8089308780245785
+  },
+  {
+    "feature": "smoking_status_2.0",
+    "coef": -0.04654185739530627,
+    "odds_ratio": 0.9545246058200199,
+    "p_value": 0.17194233279461646
+  },
+  {
+    "feature": "height_inches",
+    "coef": -0.07322440851904422,
+    "odds_ratio": 0.9293922430854429,
+    "p_value": 2.2862703861954657e-10
+  },
+  {
+    "feature": "income_level_3.0",
+    "coef": -0.07521329110205045,
+    "odds_ratio": 0.9275456279993943,
+    "p_value": 0.0030845247376552216
+  },
+  {
+    "feature": "education_level_3.0",
+    "coef": -0.10502744901572661,
+    "odds_ratio": 0.900299809903457,
+    "p_value": 3.6383572984927645e-07
+  },
+  {
+    "feature": "income_level_4.0",
+    "coef": -0.11873068133460157,
+    "odds_ratio": 0.8880469361743513,
+    "p_value": 2.5367162648024306e-06
+  },
+  {
+    "feature": "sex_2.0",
+    "coef": -0.12783658901818223,
+    "odds_ratio": 0.8799971685972534,
+    "p_value": 1.452897389430721e-20
+  },
+  {
+    "feature": "education_level_2.0",
+    "coef": -0.14976379048748714,
+    "odds_ratio": 0.8609113078500481,
+    "p_value": 2.3201248403434094e-13
+  },
+  {
+    "feature": "income_level_6.0",
+    "coef": -0.1507016612651506,
+    "odds_ratio": 0.8601042628033948,
+    "p_value": 4.605581341730647e-09
+  },
+  {
+    "feature": "income_level_5.0",
+    "coef": -0.16825511440989796,
+    "odds_ratio": 0.8451382002468639,
+    "p_value": 6.268718784483526e-14
+  },
+  {
+    "feature": "education_level_4.0",
+    "coef": -0.23248769709157502,
+    "odds_ratio": 0.7925595000737476,
+    "p_value": 1.89372459878598e-28
+  },
+  {
+    "feature": "income_level_7.0",
+    "coef": -0.26141434636301303,
+    "odds_ratio": 0.7699618226304411,
+    "p_value": 2.846211775331354e-14
+  }
+]
