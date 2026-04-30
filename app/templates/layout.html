@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+    <title>{% block title %}My App{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <aside>
+        <a href="{{ url_for('home.home') }}" class="nav-brand">SCREAM</a>
+        <a href="{{ url_for('home.home') }}">Home</a>
+        <a href="{{ url_for('vis.vis') }}">Visualization</a>
+        <a href="{{ url_for('predict.predict') }}">Predict</a>
+        <a href="{{ url_for('eda.index') }}">EDA</a>
+        <a href="{{ url_for('models.index') }}">Models</a>
+    </aside>
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <ul class="flashes">
+            {% for category, message in messages %}
+            <li class="flash {{ category }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

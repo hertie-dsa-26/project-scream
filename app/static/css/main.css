@@ -1,0 +1,94 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --sidebar: #f0ede8;
+    --sidebar-border: #e4e2dd;
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --text: #1a1a1a;
+    --muted: #888;
+    --accent: #2563eb;
+    --border: #e4e2dd;
+}
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+}
+
+aside {
+    width: 200px;
+    background: var(--sidebar);
+    border-right: 1px solid var(--sidebar-border);
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.nav-brand {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+aside a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    transition: background 0.15s, color 0.15s;
+}
+
+aside a:hover {
+    background: var(--border);
+    color: var(--text);
+}
+
+main {
+    flex: 1;
+    padding: 2.5rem;
+    max-width: 900px;
+}
+
+h1 {
+    font-size: 2rem;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+}
+
+ul { list-style: none; margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+
+li {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+}
+
+/* Flash messages */
+.flashes { list-style: none; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.flash {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    background: #dbeafe;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+}
+.flash.error { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
