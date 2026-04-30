@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head>
+    <title>{% block title %}SCREAM{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/story.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body class="story-body">
+    <header class="story-header">
+        <a href="{{ url_for('home.home') }}" class="nav-brand">SCREAM</a>
+        <nav>
+            <a href="{{ url_for('predict.predict') }}">Predict</a>
+            <a href="{{ url_for('eda.index') }}">EDA</a>
+            <a href="{{ url_for('models.index') }}">Models</a>
+        </nav>
+    </header>
+    {% block content %}{% endblock %}
+    {% block scripts %}{% endblock %}
+</body>
+</html>
