@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block title %}Predict — SCREAM{% endblock %}
+
+{% block content %}
+<h1>Diabetes Risk Predictor</h1>
+<p style="color: var(--muted); margin-top: 0.5rem; font-size: 0.9rem;">
+    Fill in your health indicators. The model will estimate your diabetes risk.
+</p>
+
+<form class="predict-form" method="POST" action="{{ url_for('predict.predict') }}">
+
+    <!-- ── Input variables go here once the model is defined ── -->
+    <div class="input-placeholder">
+        Input variables will appear here once the model is trained.<br><br>
+        <em>e.g. age, BMI, smoking status, physical activity, blood pressure…</em>
+    </div>
+
+    <button type="submit">Predict</button>
+</form>
+
+{% if result %}
+<div class="result-box">
+    <h2>Prediction</h2>
+    <p>{{ result }}</p>
+</div>
+{% endif %}
+
+{% endblock %}

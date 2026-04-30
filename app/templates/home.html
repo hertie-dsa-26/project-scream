@@ -1,0 +1,99 @@
+{% extends "layout_story.html" %}
+
+{% block title %}SCREAM — Diabetes in America{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://unpkg.com/scrollama"></script>
+{% endblock %}
+
+{% block content %}
+<div class="story-container">
+
+    <!-- Left: scrolling text chapters -->
+    <div class="story-text" id="story-steps">
+
+        <div class="step" data-step="0">
+            <div class="step-content">
+                <h2>Diabetes across the United States</h2>
+                <p>
+                    The BRFSS 2024 survey captures health data from over 400,000 Americans.
+                    Diabetes is one of the most prevalent chronic conditions —
+                    and its distribution is far from uniform.
+                </p>
+            </div>
+        </div>
+
+        <div class="step" data-step="1">
+            <div class="step-content">
+                <h2>The Southern Belt</h2>
+                <p>
+                    States in the South consistently report higher diabetes rates.
+                    Historical patterns of poverty, food access, and healthcare
+                    coverage all play a role.
+                </p>
+            </div>
+        </div>
+
+        <div class="step" data-step="2">
+            <div class="step-content">
+                <h2>Risk factors</h2>
+                <p>
+                    BMI, physical activity, smoking, and age are among the
+                    strongest predictors. The picture shifts when we look at
+                    who is most at risk — not just where they live.
+                </p>
+            </div>
+        </div>
+
+        <div class="step" data-step="3">
+            <div class="step-content">
+                <h2>Predict your risk</h2>
+                <p>
+                    Using these patterns, we trained a model that estimates
+                    individual diabetes risk based on personal health indicators.
+                </p>
+                <a class="cta" href="{{ url_for('predict.predict') }}">Try the predictor →</a>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right: sticky map -->
+    <div class="story-graphic">
+        <div id="story-map"></div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- Initial map render ---
+    var mapData = {{ map_json | safe }};
+    Plotly.newPlot('story-map', mapData.data, mapData.layout, {
+        responsive: true,
+        displayModeBar: false
+    });
+
+    // Per-step map updates — swap titles (and later: data) as the story develops
+    const stepUpdates = [
+        { title: 'Diabetes prevalence by state — BRFSS 2024' },
+        { title: 'Focus: the Southern Belt' },
+        { title: 'Weighted by key risk factors' },
+        { title: 'Who is most at risk?' },
+    ];
+
+    // --- Scrollama setup ---
+    const scroller = scrollama();
+    scroller
+        .setup({ step: '.step', offset: 0.5 })
+        .onStepEnter(({ element, index }) => {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('is-active'));
+            element.classList.add('is-active');
+            Plotly.relayout('story-map', { 'title.text': stepUpdates[index].title });
+        });
+
+    window.addEventListener('resize', scroller.resize);
+</script>
+{% endblock %}
