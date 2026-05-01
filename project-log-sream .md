@@ -45,7 +45,7 @@ A running record of what the team has built and when. Updated as the project pro
 
 **Mar 4:** PR #9 merged (subsetting pipeline). Jesper begins insurance EDA.
 
-**Mar 9:** Mateis fixes a path bug in the pipeline instructions.
+**Mar 9:** Marci fixes a path bug in the pipeline instructions.
 
 **Mar 10–11 — Sprint Planning Meeting:** Team formally switches to biweekly sprints and adopts Microsoft Teams for screen-sharing stand-ups. Roles are distributed:
 
@@ -58,7 +58,7 @@ A running record of what the team has built and when. Updated as the project pro
 
 **Mar 12:** Adarsh establishes contributing guidelines and version control workflow for the team (PR #11 merged) — branch naming, PR review process, commit standards, `.gitignore`.
 
-**Mar 13:** Mateis completes the depression EDA notebook (PR #12). Adarsh shares the official workflow docs with the team.
+**Mar 13:** Marci completes the depression EDA notebook (PR #12). Adarsh shares the official workflow docs with the team.
 
 **Mar 15:** PR #12 (depression EDA) merged.
 
