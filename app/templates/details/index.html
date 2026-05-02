@@ -1,56 +1,246 @@
 {% extends "layout.html" %}
 
-{% block title %}Details — SCREAM{% endblock %}
+{% block title %}Your results in detail — SCREAM{% endblock %}
 
 {% block head %}
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 {% endblock %}
 
 {% block content %}
-<h1>Model Details</h1>
-<p style="color: var(--muted); margin-top: 0.5rem; font-size: 0.9rem;">
-    Logistic regression trained on 365,000 BRFSS 2024 respondents. Target: diabetes diagnosis.
-</p>
 
-{% if error %}
-<div style="margin-top:2rem; padding:1rem; background:#fee2e2; border:1px solid #fecaca; border-radius:6px; color:#991b1b; font-size:0.875rem;">
-    {{ error }}
-</div>
-{% else %}
-
-<div class="metrics-row">
-    <div class="metric-card">
-        <div class="metric-value">{{ metrics.roc_auc }}</div>
-        <div class="metric-label">ROC-AUC</div>
-        <div class="metric-note">Model correctly ranks {{ (metrics.roc_auc * 100)|int }}% of patient pairs</div>
-    </div>
-    <div class="metric-card">
-        <div class="metric-value">{{ (metrics.accuracy * 100)|round(1) }}%</div>
-        <div class="metric-label">Accuracy</div>
-        <div class="metric-note">Note: dataset is imbalanced ({{ (metrics.positive_rate * 100)|round(1) }}% positive)</div>
-    </div>
-    <div class="metric-card">
-        <div class="metric-value">{{ "{:,}".format(metrics.n_train) }}</div>
-        <div class="metric-label">Training rows</div>
-        <div class="metric-note">Tested on {{ "{:,}".format(metrics.n_test) }} held-out respondents</div>
-    </div>
+{# ── Header ── #}
+<div style="margin-bottom: 2rem;">
+    <h1>Your results in detail</h1>
+    <p style="color: var(--muted); font-size: 0.9rem; margin-top: 0.4rem;">
+        Based on your last prediction —
+        <span class="risk-badge {{ result.risk_category }}">
+            {{ result.risk_category | title }} risk &nbsp;·&nbsp; {{ result.probability_pct }}%
+        </span>
+    </p>
 </div>
 
-<h2 style="margin-top: 2.5rem; font-size: 1.1rem; font-weight: 500;">Odds Ratios</h2>
-<p style="color: var(--muted); font-size: 0.875rem; margin-bottom: 1rem;">
-    Red bars increase diabetes risk (OR > 1). Blue bars reduce it. Dashed line = no effect.
-    Only statistically significant predictors shown (p &lt; 0.05).
-</p>
-<div id="or-chart"></div>
+{# ── Section 1: Actionable features ── #}
+<section style="margin-bottom: 3rem;">
+    <h2 style="font-size: 1.1rem; font-weight: 500; margin-bottom: 0.35rem;">
+        What you can act on
+    </h2>
+    <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
+        These are factors within your control. Each card shows how your response
+        compares to the average among diabetic and non-diabetic respondents in
+        the BRFSS 2024 dataset.
+    </p>
 
-{% endif %}
+    {# What-if suggestions from model #}
+    {% for s in suggestions %}
+    {% if not s.get('static', False) %}
+    <div class="wakeup-card" style="margin-bottom: 0.75rem;">
+        <div class="wakeup-body">
+            <strong>{{ s.label }}</strong>
+            <p class="tip">{{ s.tip }}</p>
+        </div>
+        <div class="delta">−{{ s.delta_pct }}pp → {{ s.new_prob_pct }}%</div>
+    </div>
+    {% else %}
+    <div class="wakeup-card" style="margin-bottom: 0.75rem; opacity: 0.85;">
+        <div class="wakeup-body">
+            <strong>{{ s.label }}</strong>
+            <p class="tip">{{ s.tip }}</p>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    {# Population comparison table #}
+    {% if actionable_cards %}
+    <div style="margin-top: 1.5rem;">
+        <h3 style="font-size: 0.75rem; font-weight: 500; text-transform: uppercase;
+                   letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.75rem;">
+            Your responses vs. population averages
+        </h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <th style="text-align: left; padding: 0.5rem 0.75rem; color: var(--muted);
+                               font-weight: 500; font-size: 0.75rem; text-transform: uppercase;
+                               letter-spacing: 0.06em;">Feature</th>
+                    <th style="text-align: center; padding: 0.5rem 0.75rem; color: var(--muted);
+                               font-weight: 500; font-size: 0.75rem; text-transform: uppercase;
+                               letter-spacing: 0.06em;">Your answer</th>
+                    <th style="text-align: center; padding: 0.5rem 0.75rem; color: #166534;
+                               font-weight: 500; font-size: 0.75rem; text-transform: uppercase;
+                               letter-spacing: 0.06em;">Non-diabetic avg.</th>
+                    <th style="text-align: center; padding: 0.5rem 0.75rem; color: #991b1b;
+                               font-weight: 500; font-size: 0.75rem; text-transform: uppercase;
+                               letter-spacing: 0.06em;">Diabetic avg.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for card in actionable_cards %}
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 0.6rem 0.75rem; font-weight: 500;">
+                        {{ card.label }}
+                    </td>
+                    <td style="padding: 0.6rem 0.75rem; text-align: center;">
+                        {{ card.user_value }}
+                    </td>
+                    <td style="padding: 0.6rem 0.75rem; text-align: center; color: #166534;">
+                        {{ card.nondiab_avg }}
+                    </td>
+                    <td style="padding: 0.6rem 0.75rem; text-align: center; color: #991b1b;">
+                        {{ card.diabetic_avg }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <p class="disclaimer-note">{{ medical_disclaimer }}</p>
+</section>
+
+{# ── Section 2: Full model breakdown ── #}
+<section style="margin-bottom: 3rem;">
+    <h2 style="font-size: 1.1rem; font-weight: 500; margin-bottom: 0.35rem;">
+        How the model works
+    </h2>
+    <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
+        The chart below shows each feature's odds ratio from the logistic
+        regression model. An odds ratio above 1 means the feature is associated
+        with higher diabetes risk; below 1 means lower risk. Features are sorted
+        by their effect size.
+    </p>
+
+    <div id="coef-chart" style="width: 100%; height: 500px;"></div>
+
+    {# Feature table #}
+    <div style="margin-top: 1.5rem; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <th style="text-align: left; padding: 0.5rem 0.75rem; color: var(--muted);
+                               font-weight: 500; font-size: 0.72rem; text-transform: uppercase;
+                               letter-spacing: 0.06em;">Feature</th>
+                    <th style="text-align: right; padding: 0.5rem 0.75rem; color: var(--muted);
+                               font-weight: 500; font-size: 0.72rem; text-transform: uppercase;
+                               letter-spacing: 0.06em;">Odds ratio</th>
+                    <th style="text-align: right; padding: 0.5rem 0.75rem; color: var(--muted);
+                               font-weight: 500; font-size: 0.72rem; text-transform: uppercase;
+                               letter-spacing: 0.06em;">Coefficient</th>
+                    <th style="text-align: center; padding: 0.5rem 0.75rem; color: var(--muted);
+                               font-weight: 500; font-size: 0.72rem; text-transform: uppercase;
+                               letter-spacing: 0.06em;">Direction</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in coef_rows %}
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 0.5rem 0.75rem;">{{ row.display }}</td>
+                    <td style="padding: 0.5rem 0.75rem; text-align: right;
+                               font-family: 'DM Mono', monospace;">
+                        {{ "%.3f"|format(row.odds_ratio) }}
+                    </td>
+                    <td style="padding: 0.5rem 0.75rem; text-align: right;
+                               font-family: 'DM Mono', monospace;">
+                        {{ "%.3f"|format(row.coef) }}
+                    </td>
+                    <td style="padding: 0.5rem 0.75rem; text-align: center;">
+                        {% if row.direction == "risk" %}
+                        <span style="color: #991b1b; font-size: 0.78rem; font-weight: 500;">
+                            ↑ risk
+                        </span>
+                        {% else %}
+                        <span style="color: #166534; font-size: 0.78rem; font-weight: 500;">
+                            ↓ protective
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{# ── Section 3: Citations ── #}
+<section style="margin-bottom: 3rem;">
+    <h2 style="font-size: 1.1rem; font-weight: 500; margin-bottom: 0.35rem;">
+        Sources
+    </h2>
+    <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
+        Feature selection, actionable factor framing, and risk thresholds are
+        informed by the following literature.
+    </p>
+
+    <ol style="padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem;">
+        {% for ref in all_refs %}
+        <li style="font-size: 0.82rem; line-height: 1.6; color: var(--text);">
+            <strong>{{ ref.authors }}</strong> ({{ ref.year }}).
+            <em>{{ ref.title }}</em>.
+            {% if ref.url %}
+            <a href="{{ ref.url }}" target="_blank"
+               style="color: var(--accent); text-decoration: none;">↗</a>
+            {% endif %}
+            {% if ref.note %}
+            <span style="color: var(--muted);">— {{ ref.note }}</span>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ol>
+</section>
+
+<a class="cta" href="{{ url_for('predictions.predictions') }}" style="margin-top: 0;">
+    ← Back to predictions
+</a>
+
 {% endblock %}
 
 {% block scripts %}
-{% if chart_json %}
 <script>
-    var orData = {{ chart_json | safe }};
-    Plotly.newPlot('or-chart', orData.data, orData.layout, { responsive: true, displayModeBar: false });
+// Odds ratio bar chart
+var features = {{ coef_rows | map(attribute='display') | list | tojson }};
+var oddsRatios = {{ coef_rows | map(attribute='odds_ratio') | list | tojson }};
+var directions = {{ coef_rows | map(attribute='direction') | list | tojson }};
+
+var colors = directions.map(d => d === 'risk' ? '#fca5a5' : '#86efac');
+var lineColors = directions.map(d => d === 'risk' ? '#991b1b' : '#166534');
+
+var trace = {
+    type: 'bar',
+    x: oddsRatios,
+    y: features,
+    orientation: 'h',
+    marker: {
+        color: colors,
+        line: { color: lineColors, width: 1 }
+    },
+    hovertemplate: '<b>%{y}</b><br>Odds ratio: %{x:.3f}<extra></extra>',
+};
+
+var layout = {
+    xaxis: {
+        title: 'Odds ratio',
+        zeroline: false,
+    },
+    yaxis: {
+        automargin: true,
+        tickfont: { size: 11 },
+    },
+    shapes: [{
+        type: 'line',
+        x0: 1, x1: 1,
+        y0: -0.5, y1: features.length - 0.5,
+        line: { color: '#888', width: 1, dash: 'dot' }
+    }],
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor:  'rgba(0,0,0,0)',
+    margin: { l: 0, r: 20, t: 10, b: 40 },
+    font: { family: 'DM Sans' },
+};
+
+Plotly.newPlot('coef-chart', [trace], layout, {
+    responsive: true,
+    displayModeBar: false,
+});
 </script>
-{% endif %}
 {% endblock %}

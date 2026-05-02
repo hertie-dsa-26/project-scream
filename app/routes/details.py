@@ -1,48 +1,140 @@
-from flask import Blueprint, render_template
-import plotly.graph_objs as go
-import plotly, json
-from app.utils.model import get_metrics, get_coefficients
+"""
+Details blueprint  —  /details
+
+Shows a personalised breakdown of the user's last prediction:
+  1. Actionable features — user value vs population benchmarks + what-if deltas
+  2. Full model breakdown — all features ranked by odds ratio with citations
+"""
+
+from flask import Blueprint, render_template, session, redirect, url_for
+
+from app.utils.data import (
+    get_benchmarks,
+    get_overall_stats,
+    load_references,
+    FEATURE_LABELS,
+    CATEGORICAL_LABELS,
+)
+from app.utils.model import get_coefficients
 
 details_bp = Blueprint("details", __name__)
+
+# Which features get the prominent actionable treatment at the top
+_ACTIONABLE_KEYS = {"any_physical_activity", "smoking_status"}
+
+# Features where a lower value is better (for directional arrow logic)
+_LOWER_IS_BETTER = {"bmi_x100", "smoking_status", "general_health", "any_alcohol_past_30d"}
+
+
+def _fmt_value(feature: str, value: float) -> str:
+    """Return a human-readable string for a feature value."""
+    labels = CATEGORICAL_LABELS.get(feature)
+    if labels:
+        return labels.get(value, str(value))
+    if feature == "bmi_x100":
+        return f"{value / 100:.1f}"
+    if feature == "age_imputed":
+        return f"{int(value)}"
+    return f"{value:.2f}"
 
 
 @details_bp.route("/")
 def index():
-    try:
-        metrics = get_metrics()
-        coefficients = get_coefficients()
-    except RuntimeError as e:
-        return render_template("details/index.html", error=str(e))
+    result = session.get("last_result")
 
-    sig = [c for c in coefficients if c["p_value"] < 0.05]
-    sig_sorted = sorted(sig, key=lambda x: x["odds_ratio"])
+    # No prediction in session — send back to the form
+    if not result:
+        return redirect(url_for("predictions.predictions"))
 
-    features = [c["feature"] for c in sig_sorted]
-    ors      = [c["odds_ratio"] for c in sig_sorted]
-    colors   = ["#e74c3c" if o > 1 else "#2563eb" for o in ors]
+    benchmarks   = get_benchmarks()
+    overall      = get_overall_stats()
+    coefficients = get_coefficients()
+    references   = load_references()
 
-    fig = go.Figure(go.Bar(
-        x=ors, y=features, orientation="h",
-        marker_color=colors,
-        text=[f"{o:.2f}" for o in ors],
-        textposition="outside",
-    ))
-    fig.add_vline(x=1.0, line_dash="dash", line_color="#888", line_width=1)
-    fig.update_layout(
-        title="Odds Ratios — significant predictors (p < 0.05)",
-        xaxis_title="Odds Ratio  (> 1 increases risk, < 1 reduces risk)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="DM Sans"),
-        margin=dict(l=220, r=80, t=60, b=40),
-        height=max(400, len(sig_sorted) * 26),
-    )
-    chart_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    inputs = result["input_features"]
+
+    # ── Actionable feature cards ──────────────────────────────────────────
+    actionable_cards = []
+    for key in _ACTIONABLE_KEYS:
+        if key not in inputs:
+            continue
+
+        user_val      = inputs[key]
+        diabetic_avg  = benchmarks["diabetic"].get(key)
+        nondiab_avg   = benchmarks["non_diabetic"].get(key)
+
+        # Find matching suggestion with what-if delta (may not exist if condition not met)
+        suggestion = next(
+            (s for s in result["suggestions"] if s.get("label") and key in s.get("label", "").lower().replace(" ", "_") or False),
+            None,
+        )
+        # More reliable lookup by key presence in suggestions list
+        suggestion = next(
+            (s for s in result["suggestions"]
+             if not s.get("static", False) and abs(s.get("new_prob_pct", -1)) >= 0),
+            None,
+        )
+
+        actionable_cards.append({
+            "key":           key,
+            "label":         FEATURE_LABELS.get(key, key),
+            "user_value":    _fmt_value(key, user_val),
+            "user_raw":      user_val,
+            "diabetic_avg":  _fmt_value(key, diabetic_avg) if diabetic_avg is not None else "N/A",
+            "nondiab_avg":   _fmt_value(key, nondiab_avg)  if nondiab_avg  is not None else "N/A",
+        })
+
+    # ── Full model feature rows ───────────────────────────────────────────
+    # Parse feature name from coefficient entry (e.g. "general_health_3.0" -> "general_health")
+    def _base_feature(coef_name: str) -> str:
+        parts = coef_name.rsplit("_", 1)
+        try:
+            float(parts[-1])
+            return parts[0]
+        except ValueError:
+            return coef_name
+
+    # Build readable coefficient rows, one per coefficient entry
+    coef_rows = []
+    for c in coefficients:
+        base   = _base_feature(c["feature"])
+        label  = FEATURE_LABELS.get(base, base.replace("_", " ").title())
+
+        # For one-hot encoded categoricals, show the level too
+        if base != c["feature"]:
+            raw_level = c["feature"].replace(base + "_", "")
+            try:
+                level_val = float(raw_level)
+                cat_label = CATEGORICAL_LABELS.get(base, {}).get(level_val, raw_level)
+                display   = f"{label} — {cat_label}"
+            except ValueError:
+                display = f"{label} — {raw_level}"
+        else:
+            display = label
+
+        coef_rows.append({
+            "display":     display,
+            "feature":     base,
+            "coef":        round(c["coef"], 3),
+            "odds_ratio":  round(c["odds_ratio"], 3),
+            "p_value":     c["p_value"],
+            "direction":   "risk" if c["coef"] > 0 else "protective",
+        })
+
+    # ── Citations ─────────────────────────────────────────────────────────
+    actionable_refs = [r for r in references if r["topic"] == "actionable"]
+    model_refs      = [r for r in references if r["topic"] == "model"]
+    general_refs    = [r for r in references if r["topic"] == "general"]
+    all_refs        = general_refs + actionable_refs + model_refs
 
     return render_template(
         "details/index.html",
-        metrics=metrics,
-        coefficients=coefficients,
-        chart_json=chart_json,
-        error=None,
+        result           = result,
+        actionable_cards = actionable_cards,
+        coef_rows        = coef_rows,
+        overall          = overall,
+        benchmarks       = benchmarks,
+        all_refs         = all_refs,
+        feature_labels   = FEATURE_LABELS,
+        suggestions      = result["suggestions"],
     )

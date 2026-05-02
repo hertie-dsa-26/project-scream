@@ -1,0 +1,79 @@
+[
+  {
+    "id": "brfss_surveillance",
+    "feature": null,
+    "topic": "general",
+    "short": "CDC BRFSS Surveillance Brief",
+    "authors": "Centers for Disease Control and Prevention",
+    "year": 2024,
+    "title": "Behavioral Risk Factor Surveillance System: Prevalence and Trends Data",
+    "url": "https://www.cdc.gov/brfss/",
+    "note": "Source dataset for all population benchmarks shown on this page."
+  },
+  {
+    "id": "physical_activity",
+    "feature": "any_physical_activity",
+    "topic": "actionable",
+    "short": "Lifestyle variables & diabetes (NHANES)",
+    "authors": "Efrain Riveros Perez, Bibiana Avella- Molano",
+    "year": 2024,
+    "title": "Learning from the machine: is diabetes in adults predicted by lifestyle variables?",
+    "url": null,
+    "note": "Physical activity is consistently identified as a top non-invasive predictor of diabetes risk across NHANES/BRFSS cohorts."
+  },
+  {
+    "id": "smoking",
+    "feature": "smoking_status",
+    "topic": "actionable",
+    "short": "BRFSS-based explainable ML (Tennessee)",
+    "authors": "Mustapha Aliyu Muhammad, Jamilu Sani, Mohamed Mustaf Ahmed",
+    "year": 2023,
+    "title": "Explainable machine learning for self-reported diabetes in BRFSS 2023",
+    "url": null,
+    "note": "Smoking status appears as a significant predictor in BRFSS-based logistic and gradient boosting models."
+  },
+  {
+    "id": "diet",
+    "feature": null,
+    "topic": "actionable",
+    "short": "BRFSS diabetes disparities brief",
+    "authors": "S. Austin Wong, S. R. Millstein, J. Kaelin-Kee",
+    "year": 2023,
+    "title": "Diabetes prevalence and disparities — BRFSS surveillance brief",
+    "url": null,
+    "note": "Diet and food access are identified as key social determinants of diabetes prevalence."
+  },
+  {
+    "id": "bmi_weight",
+    "feature": "bmi_x100",
+    "topic": "model",
+    "short": "Ensemble stacking for diabetes classification",
+    "authors": "Khan et al.",
+    "year": 2024,
+    "title": "Cardiovascular and Diabetes Classification using Ensemble Stacking Classifiers with SVM",
+    "url": null,
+    "note": "BMI and weight consistently rank among the strongest anthropometric predictors across reviewed studies."
+  },
+  {
+    "id": "general_health",
+    "feature": "general_health",
+    "topic": "model",
+    "short": "ML model for cardiovascular risk in T2DM",
+    "authors": "Chen et al.",
+    "year": 2025,
+    "title": "Machine learning model to predict cardiovascular diseases based on diabetes",
+    "url": null,
+    "note": "Self-rated general health is a strong proxy for chronic disease burden including diabetes."
+  },
+  {
+    "id": "socioeconomic",
+    "feature": null,
+    "topic": "model",
+    "short": "BRFSS diabetes disparities brief",
+    "authors": "S. Austin Wong, S. R. Millstein, J. Kaelin-Kee",
+    "year": 2023,
+    "title": "Diabetes prevalence and disparities — BRFSS surveillance brief",
+    "url": null,
+    "note": "Income and education level are associated with diabetes prevalence through access to healthcare, food quality, and physical activity opportunities."
+  }
+]

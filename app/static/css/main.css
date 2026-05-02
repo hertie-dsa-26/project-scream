@@ -11,6 +11,7 @@
     --border: #e4e2dd;
 }
 
+/* ── Base ── */
 body {
     font-family: 'DM Sans', sans-serif;
     background: var(--bg);
@@ -19,6 +20,7 @@ body {
     min-height: 100vh;
 }
 
+/* ── Sidebar nav ── */
 aside {
     width: 200px;
     background: var(--sidebar);
@@ -56,10 +58,15 @@ aside a:hover {
     color: var(--text);
 }
 
+/* ── Main content area ── */
 main {
     flex: 1;
     padding: 2.5rem;
     max-width: 900px;
+}
+
+main.wide {
+    max-width: 1400px;
 }
 
 h1 {
@@ -69,20 +76,15 @@ h1 {
     margin-bottom: 1rem;
 }
 
-ul { list-style: none; margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
-
-li {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    font-family: 'DM Mono', monospace;
-    color: var(--muted);
+/* ── Flash messages ── */
+.flashes {
+    list-style: none;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
-/* Flash messages */
-.flashes { list-style: none; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .flash {
     padding: 0.75rem 1rem;
     border-radius: 6px;
@@ -91,9 +93,36 @@ li {
     border: 1px solid #bfdbfe;
     color: #1e40af;
 }
+
 .flash.error { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
 
-/* Metric cards (details page) */
+/* ── CTA button / link (reusable across pages) ── */
+.cta {
+    display: inline-block;
+    margin-top: 1.5rem;
+    padding: 0.65rem 1.25rem;
+    background: var(--accent);
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    transition: opacity 0.15s;
+}
+.cta:hover { opacity: 0.85; }
+
+/* ── Disclaimer note (appears below results and on home) ── */
+.disclaimer-note {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 1.25rem;
+    margin-bottom: 0.25rem;
+    line-height: 1.5;
+    font-style: italic;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+}
+
+/* ── Metric cards (details page) ── */
 .metrics-row {
     display: flex;
     gap: 1rem;
@@ -131,4 +160,226 @@ li {
     font-size: 0.78rem;
     color: var(--muted);
     line-height: 1.4;
+}
+
+/* ── Predictor page ── */
+.predictor-inner {
+    max-width: 580px;
+}
+
+.predictor-inner h2 {
+    font-size: 1.8rem;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+}
+
+.predictor-sub {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+}
+
+.model-error {
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+}
+
+/* ── Form fields ── */
+.predict-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.form-group label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.form-group input,
+.form-group select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.6rem 0.75rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    color: var(--text);
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+/* Custom dropdown arrow */
+.form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2rem;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: 2px solid var(--accent);
+    border-color: transparent;
+}
+
+/* Validation error states */
+.form-group.has-error input,
+.form-group.has-error select {
+    border-color: #e74c3c;
+}
+
+.field-error {
+    color: #e74c3c;
+    font-size: 0.78rem;
+    margin-top: 0.1rem;
+    display: block;
+}
+
+.predict-form button[type="submit"] {
+    align-self: flex-start;
+    padding: 0.65rem 1.75rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    margin-top: 0.25rem;
+}
+.predict-form button[type="submit"]:hover { opacity: 0.85; }
+
+/* ── Risk result box ── */
+.risk-result {
+    margin-top: 2.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.75rem 2rem;
+}
+
+.risk-category-banner {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.risk-category-banner.low      { background: #dcfce7; border: 1px solid #86efac; }
+.risk-category-banner.moderate { background: #fef9c3; border: 1px solid #fde047; }
+.risk-category-banner.high     { background: #fee2e2; border: 1px solid #fca5a5; }
+
+.risk-category-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.7;
+    margin-bottom: 0.15rem;
+}
+
+.risk-category-banner.low      .risk-category-label { color: #166534; }
+.risk-category-banner.moderate .risk-category-label { color: #854d0e; }
+.risk-category-banner.high     .risk-category-label { color: #991b1b; }
+
+.risk-category-name {
+    font-size: 1.6rem;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1;
+}
+
+.risk-category-banner.low      .risk-category-name { color: #166534; }
+.risk-category-banner.moderate .risk-category-name { color: #854d0e; }
+.risk-category-banner.high     .risk-category-name { color: #991b1b; }
+
+.risk-number {
+    font-size: 3rem;
+    font-weight: 300;
+    letter-spacing: -0.04em;
+    line-height: 1;
+}
+
+.risk-category-banner.low      .risk-number { color: #166534; }
+.risk-category-banner.moderate .risk-number { color: #854d0e; }
+.risk-category-banner.high     .risk-number { color: #991b1b; }
+
+.risk-context {
+    color: var(--muted);
+    font-size: 0.8rem;
+    margin-top: 0.75rem;
+    font-style: italic;
+}
+
+/* ── What you can change ── */
+.wakeup-section {
+    margin-top: 1.75rem;
+}
+
+.wakeup-section h3 {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+}
+
+.wakeup-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+
+.wakeup-body strong {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.wakeup-body .tip {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+    line-height: 1.5;
+}
+
+.delta {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #166534;
+    white-space: nowrap;
+    padding-top: 0.15rem;
+    flex-shrink: 0;
 }

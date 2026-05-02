@@ -14,7 +14,7 @@
         <a href="{{ url_for('explorer.explorer') }}">Explorer</a>
         <a href="{{ url_for('details.index') }}">Details</a>
     </aside>
-    <main>
+    <main class="{% block mainclass %}{% endblock %}">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         <ul class="flashes">

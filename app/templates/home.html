@@ -44,7 +44,9 @@
                 <h2>Predict your risk</h2>
                 <p>Using these patterns, we trained a model that estimates
                 individual diabetes risk based on personal health indicators.</p>
-                <a class="cta" href="#predictor">Check your own risk ↓</a>
+                <a class="cta" href="{{ url_for('predictions.predictions') }}">
+                    Check your own risk →
+                </a>
             </div>
         </div>
 
@@ -56,78 +58,8 @@
 
 </div>
 
-<!-- ── Predictor section ── -->
-<section class="predictor-section" id="predictor">
-    <div class="predictor-inner">
+<p class="disclaimer-note">{{ medical_disclaimer }}</p>
 
-        <h2>Check your own risk</h2>
-        <p class="predictor-sub">Fill in a few health indicators. The model will estimate your diabetes risk in seconds.</p>
-
-        {% if error %}
-        <div class="model-error">{{ error }}</div>
-        {% endif %}
-
-        <form class="predict-form" method="POST" action="{{ url_for('home.home') }}#predictor">
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="age">Age</label>
-                    <input type="number" id="age" name="age" min="18" max="80"
-                           value="{{ form_values.get('age', '') }}" placeholder="e.g. 45" required>
-                </div>
-                <div class="form-group">
-                    <label for="bmi">BMI</label>
-                    <input type="number" id="bmi" name="bmi" min="10" max="70" step="0.1"
-                           value="{{ form_values.get('bmi', '') }}" placeholder="e.g. 27.5" required>
-                </div>
-            </div>
-
-            {% for field, options in form_options.items() %}
-            <div class="form-group">
-                <label for="{{ field }}">{{ field | replace('_', ' ') | title }}</label>
-                <select id="{{ field }}" name="{{ field }}" required>
-                    <option value="">Select…</option>
-                    {% for val, label in options %}
-                    <option value="{{ val }}"
-                        {% if form_values.get(field) == val|string %}selected{% endif %}>
-                        {{ label }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            {% endfor %}
-
-            <button type="submit">Estimate my risk</button>
-
-        </form>
-
-        {% if result is not none %}
-        <div class="risk-result">
-            <div class="risk-number">{{ result }}%</div>
-            <span class="risk-badge {{ risk_level }}">{{ risk_level | title }} risk</span>
-            <p class="risk-context">The average in this dataset is 15.2% — your result is model-based, not a diagnosis.</p>
-        </div>
-
-        {% if suggestions %}
-        <div class="wakeup-section">
-            <h3>What you can change</h3>
-            {% for s in suggestions %}
-            <div class="wakeup-card">
-                <div class="wakeup-body">
-                    <strong>{{ s.label }}</strong>
-                    <p class="tip">{{ s.tip }}</p>
-                </div>
-                {% if 'delta' in s %}
-                <div class="delta">−{{ s.delta }}pp → {{ s.new_prob }}%</div>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-        {% endif %}
-
-    </div>
-</section>
 {% endblock %}
 
 {% block scripts %}
@@ -155,11 +87,5 @@
         });
 
     window.addEventListener('resize', scroller.resize);
-
-    {% if result is not none %}
-    window.addEventListener('load', function () {
-        document.getElementById('predictor').scrollIntoView({ behavior: 'smooth' });
-    });
-    {% endif %}
 </script>
 {% endblock %}
