@@ -28,12 +28,10 @@ FORM_OPTIONS = {
         (5, "Poor"),
     ],
     "education_level": [
-        (1, "Never attended school"),
-        (2, "Grades 1–8"),
-        (3, "Grades 9–11"),
-        (4, "Grade 12 / GED"),
-        (5, "Some college"),
-        (6, "College graduate"),
+        (1, "Never attended school or only kindergarten"),
+        (2, "Grades 1–8 (elementary)"),
+        (3, "Grades 9–11 (some high school)"),
+        (4, "Grade 12 / GED or higher"),
     ],
     "income_level": [
         (1, "< $15k"),
@@ -42,8 +40,7 @@ FORM_OPTIONS = {
         (4, "$35–50k"),
         (5, "$50–100k"),
         (6, "$100–150k"),
-        (7, "$150–200k"),
-        (8, "> $200k"),
+        (7, "> $150k"),
     ],
     "smoking_status": [
         (1, "Current smoker (daily)"),

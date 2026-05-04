@@ -43,7 +43,7 @@ _PLOTLY_BASE = dict(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
     font=dict(family="DM Sans", size=12),
-    margin=dict(l=40, r=20, t=50, b=40),
+    margin=dict(l=40, r=20, t=60, b=40),
 )
 
 
@@ -74,10 +74,25 @@ def _chart_outcome_distribution(df: pd.DataFrame) -> str:
         **_PLOTLY_BASE,
         title="Diabetes prevalence — BRFSS 2024",
         showlegend=False,
-        yaxis=dict(title="Respondents", showgrid=True, gridcolor="rgba(0,0,0,0.06)"),
+        yaxis=dict(title="Respondents", showgrid=True, gridcolor="rgba(0,0,0,0.06)",
+                   range=[0, max(counts.values.tolist()) * 1.15]),
         xaxis=dict(title=""),
-        updatemenus=[_toggle_menu(["Count", "Percentage"],
-                                  ["Respondents", "% of respondents"])],
+        updatemenus=[{
+            "type": "buttons", "direction": "right",
+            "x": 1.0, "xanchor": "right", "y": 1.0, "yanchor": "top",
+            "buttons": [
+                {"label": "Count", "method": "update",
+                 "args": [{"visible": [True, False]},
+                           {"yaxis": {"title": "Respondents",
+                                       "range": [0, max(counts.values.tolist()) * 1.15],
+                                       "showgrid": True, "gridcolor": "rgba(0,0,0,0.06)"}}]},
+                {"label": "Percentage", "method": "update",
+                 "args": [{"visible": [False, True]},
+                           {"yaxis": {"title": "% of respondents",
+                                       "range": [0, max([round(p, 1) for p in pcts.values]) * 1.15],
+                                       "showgrid": True, "gridcolor": "rgba(0,0,0,0.06)"}}]},
+            ],
+        }],
     )
     return _to_json(fig)
 
@@ -154,7 +169,7 @@ def _chart_lifestyle_vs_diabetes(df: pd.DataFrame) -> str:
                    range=[0, 30]),
         xaxis=dict(title=""),
         updatemenus=[{
-            "type": "buttons", "direction": "right", "x": 0.0, "y": 1.18,
+            "type": "buttons", "direction": "right", "x": 1.0, "xanchor": "right", "y": 1.0, "yanchor": "top",
             "buttons": [
                 {"label": "Physical activity", "method": "update",
                  "args": [{"visible": [True, False, False]},
@@ -207,7 +222,7 @@ def _chart_bmi_by_diabetes(df: pd.DataFrame) -> str:
 def _toggle_menu(labels: list[str], y_titles: list[str]) -> dict:
     """Standard count/percentage toggle button menu."""
     return {
-        "type": "buttons", "direction": "right", "x": 0.0, "y": 1.15,
+        "type": "buttons", "direction": "right", "x": 1.0, "xanchor": "right", "y": 1.0, "yanchor": "top",
         "buttons": [
             {
                 "label": label,

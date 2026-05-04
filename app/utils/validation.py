@@ -24,8 +24,8 @@ _NUMERIC_FIELDS: dict[str, tuple] = {
 _CATEGORICAL_FIELDS: dict[str, set[int]] = {
     "sex":                   {1, 2},
     "general_health":        {1, 2, 3, 4, 5},
-    "education_level":       {1, 2, 3, 4, 5, 6},
-    "income_level":          {1, 2, 3, 4, 5, 6, 7, 8},
+    "education_level":       {1, 2, 3, 4},          # pipeline trained on codes 1–4 only
+    "income_level":          {1, 2, 3, 4, 5, 6, 7},  # pipeline trained on codes 1–7 only
     "smoking_status":        {1, 2, 3, 4},
     "any_physical_activity": {1, 2},
     "any_alcohol_past_30d":  {1, 2},
