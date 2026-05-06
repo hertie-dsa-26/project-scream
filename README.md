@@ -88,6 +88,6 @@ This project was built collaboratively by Team SCREAM:
 - **David Colín**
 - **Jesper Boon**
 - **Kevine Shima**
-- **Luiscza**
+- **Luis Czajka**
 - **Marcell Matei**
 - **Yenus Ibrahim Ayalew**
