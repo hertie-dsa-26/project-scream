@@ -70,16 +70,16 @@ The application follows a highly modular structure with clear separation of conc
 
 ## Literature & Credibility
 
-Papers where machine learning was used to predict diabetes using similar features:
+Machine learning approaches applied to diabetes prediction using demographic and lifestyle features have been extensively studied. The following research informed our methodology:
 
-1. [MDPI: A Comparative Study of Diabetes Prediction Based on Lifestyle Factors...](https://www.mdpi.com/2075-4418/15/20/2622) / [ResearchGate Version](https://www.researchgate.net/publication/389648378_A_Comparative_Study_of_Diabetes_Prediction_Based_on_Lifestyle_Factors_Using_Machine_Learning)
-2. [ResearchGate: AI-driven analysis of diabetes risk determinants in US adults...](https://www.researchgate.net/publication/395238407_AI-driven_analysis_of_diabetes_risk_determinants_in_US_adults_Exploring_disease_prevalence_and_health_factors#:~:text=BMI%2C%20age%2C%20general%2C%20health%20status%2C%20income%2C%20physical%20health%20days%2C%20and%20education%20as%20those%20reporting%20poor%20general%20health)
-3. [PMC: The survey's comprehensive scope includes...](https://pmc.ncbi.nlm.nih.gov/articles/PMC12669510/#:~:text=The%20survey's%20comprehensive%20scope%20includes,11)
-4. [ResearchGate: Diabetes Prediction Using Feature Selection Algorithms and Boosting-Based Machine Learning Classifiers](https://www.researchgate.net/publication/396643677_Diabetes_Prediction_Using_Feature_Selection_Algorithms_and_Boosting-Based_Machine_Learning_Classifiers)
-5. [ResearchGate: Identification of key cardiovascular disease predictive factors from the China Health and Retirement Longitudinal Study...](https://www.researchgate.net/publication/401155832_Identification_of_key_cardiovascular_disease_predictive_factors_from_the_China_Health_and_Retirement_Longitudinal_Study_dataset_using_machine_learning-based_algorithms)
-6. [PMC10107388](https://pmc.ncbi.nlm.nih.gov/articles/PMC10107388/)
-7. [ResearchGate: Cardiovascular and Diabetes Diseases Classification Using Ensemble Stacking Classifiers with SVM...](https://www.researchgate.net/publication/364739441_Cardiovascular_and_Diabetes_Diseases_Classification_Using_Ensemble_Stacking_Classifiers_with_SVM_as_a_Meta_Classifier)
-8. [BMJ Open: e096595](https://bmjopen.bmj.com/content/15/3/e096595)
+1. *A Comparative Study of Diabetes Prediction Based on Lifestyle Factors Using Machine Learning.* Diagnostics (MDPI). [Link](https://www.mdpi.com/2075-4418/15/20/2622)
+2. *AI-driven analysis of diabetes risk determinants in US adults: Exploring disease prevalence and health factors.* ResearchGate. [Link](https://www.researchgate.net/publication/395238407_AI-driven_analysis_of_diabetes_risk_determinants_in_US_adults_Exploring_disease_prevalence_and_health_factors)
+3. *Diabetes Prediction Using Feature Selection Algorithms and Boosting-Based Machine Learning Classifiers.* ResearchGate. [Link](https://www.researchgate.net/publication/396643677_Diabetes_Prediction_Using_Feature_Selection_Algorithms_and_Boosting-Based_Machine_Learning_Classifiers)
+4. *Identification of key cardiovascular disease predictive factors from the China Health and Retirement Longitudinal Study dataset using machine learning-based algorithms.* ResearchGate. [Link](https://www.researchgate.net/publication/401155832)
+5. *Cardiovascular and Diabetes Diseases Classification Using Ensemble Stacking Classifiers with SVM as a Meta Classifier.* ResearchGate. [Link](https://www.researchgate.net/publication/364739441)
+6. *Diabetes prediction research.* PubMed Central, PMC12669510. [Link](https://pmc.ncbi.nlm.nih.gov/articles/PMC12669510/)
+7. *Diabetes prediction research.* PubMed Central, PMC10107388. [Link](https://pmc.ncbi.nlm.nih.gov/articles/PMC10107388/)
+8. *Diabetes prediction research.* BMJ Open, e096595. [Link](https://bmjopen.bmj.com/content/15/3/e096595)
 
 ## Meet the Team
 
