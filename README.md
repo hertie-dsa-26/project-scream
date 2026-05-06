@@ -1,200 +1,74 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/D69TCBIW)
 
-## Dataset
-The Behavioral Risk Factor Surveillance System (BRFSS) is the largest continuously conducted health survey system in the world. It collects data on preventive health practices, risk behaviors, and chronic health conditions among U.S. adults. The 2024 dataset contains over 400,000 survey responses across 50 U.S. states and territories.
+# SCREAM: Diabetes Risk Predictor
 
-**Download the dataset:**
-- [Official CDC Website (Recommended)](https://www.cdc.gov/brfss/annual_data/annual_2024.html)
-- [Google Drive](https://drive.google.com/file/d/1rp-CuzP-wnhk3gEbNib1MZ5ci_r8etMw/view?usp=sharing)
+SCREAM is an interactive web application that uses machine learning to estimate an individual\'s risk of developing diabetes based on behavioral, demographic, and health factors. Our predictive models are powered by the 2024 Behavioral Risk Factor Surveillance System (BRFSS) dataset from the CDC.
 
+## Setup & Installation
 
+**Prerequisites:** 
+- Python 3.14+
+- [uv](https://github.com/astral-sh/uv) (our chosen Python package manager)
 
-## Why These Variables
+**1. Clone the repository and install dependencies:**
+\\ash
+git clone https://github.com/hertie-dsa-26/project-scream.git
+cd project-scream
+uv sync
+\
+**2. Data Requirements:**
+To train the model, run predictions, or view the Explorer, you must have the dataset subset locally.
+* Place the \rfss2024_subset.parquet\ file inside \data/subsets/\.
 
-We picked ~75 variables that support **three candidate prediction targets** (team
-still deciding which one to go with):
+**3. Generate Model Artifacts:**
+Because the model artifacts are not stored in version control, you must generate them locally before starting the app:
+\\ash
+uv run python train_model.py
+\*(This will generate \pipeline.joblib\, \metrics.json\, and \coefficients.json\ in \pp/model/artifacts/\)*
 
-| Target                | Column            | Question it answers                       |
-|-----------------------|-------------------|-------------------------------------------|
-| Diabetes              | `has_diabetes`    | Can we predict diabetes from risk factors? |
-| Depression            | `has_depression`  | What behavioral/social factors predict it? |
-| Insurance access      | `has_insurance`   | Who lacks coverage and why?               |
+**4. Run the Flask App:**
+Start the development server:
+\\ash
+uv run flask --app run.py run --debug
+\The app will now be accessible at \http://127.0.0.1:5000/\.
 
-The predictor variables cover the main categories you'd need for any of these:
+**5. Running Tests (Optional):**
+To execute the robust test suite (data models, validation factors), run:
+\\ash
+uv run pytest tests/ -v
+\
+## Features
 
-- **Demographics** — age, sex, race, income, education, employment, marital status
-- **Health status** — general health, physical/mental health days
-- **Chronic conditions** — heart disease, stroke, asthma, COPD, kidney disease, etc.
-- **Body metrics** — BMI, height, weight
-- **Lifestyle** — exercise, smoking, alcohol
-- **Social determinants** — food insecurity, bills, transportation, loneliness
-- **Disability** — hearing, vision, mobility, cognition
-- **Healthcare access** — insurance, personal doctor, cost barriers
+- **Personalized Risk Prediction:** Users submit health factors via an intuitive UI to receive a tailored diabetes risk probability and categorization.
+- **Actionable Health Suggestions:** Provides dynamic counterfactual recommendations (e.g., stopping smoking, improving physical activity) indicating exactly how lifestyle adjustments can lower the user\'s personal risk score.
+- **Data Explorer:** An interactive dashboard exploring relationships between demographic/lifestyle factors and diabetes prevalence across the U.S.
 
-## Variable Reference
+## Data & Methodology
 
-Full mapping from BRFSS codebook names to our clean names. Use this when cross-referencing
-the [BRFSS Codebook](https://www.cdc.gov/brfss/annual_data/2024/llcp-codebook24.html).
+The model is trained on a ~400,000-response dataset from the **2024 BRFSS**, using approximately 75 variables filtering for demographics, general health, chronic conditions, lifestyle, and social determinants. We trained a **Support Vector Machine (SVM)** pipeline integrated tightly with a Flask backend.
 
-### Survey Design
-| BRFSS Code | Our Name               | Description                    |
-|------------|------------------------|--------------------------------|
-| `_LLCPWT`  | `survey_weight`        | Final survey weight            |
-| `_STSTR`   | `stratification_var`   | Stratification variable        |
-| `_PSU`     | `primary_sampling_unit`| Primary sampling unit          |
+**Download the raw dataset:**
+- [Official CDC Website](https://www.cdc.gov/brfss/annual_data/annual_2024.html)
+- [Google Drive Mirror](https://drive.google.com/file/d/1rp-CuzP-wnhk3gEbNib1MZ5ci_r8etMw/view?usp=sharing)
 
-### Geography
-| BRFSS Code | Our Name       | Description          |
-|------------|----------------|----------------------|
-| `_STATE`   | `state_fips`   | State FIPS code      |
-| `_METSTAT` | `metro_status` | Metropolitan status  |
-| `_URBSTAT` | `urban_rural`  | Urban/rural status   |
+*(Note: Data dictionaries mapping BRFSS codebooks to pipeline features were utilized internally during the EDA phase.)*
 
-### Demographics
-| BRFSS Code | Our Name                  | Description                      |
-|------------|---------------------------|----------------------------------|
-| `_SEX`     | `sex`                     | Sex (calculated)                 |
-| `SEXVAR`   | `sex_raw`                 | Sex of respondent                |
-| `_AGEG5YR` | `age_group_5yr`           | Age in 5-year groups             |
-| `_AGE65YR` | `age_group_65`            | Age: 18–64 / 65+                |
-| `_AGE80`   | `age_imputed`             | Imputed age (capped at 80)       |
-| `_AGE_G`   | `age_group_6`             | Imputed age in 6 groups          |
-| `_IMPRACE` | `race_ethnicity_imputed`  | Imputed race/ethnicity           |
-| `_RACE`    | `race_ethnicity`          | Computed race-ethnicity          |
-| `_RACEGR3` | `race_ethnicity_5lvl`     | 5-level race/ethnicity           |
-| `_EDUCAG`  | `education_level`         | Education level (computed)       |
-| `EDUCA`    | `education_raw`           | Education level (raw)            |
-| `_INCOMG1` | `income_level`            | Income categories (computed)     |
-| `INCOME3`  | `income_raw`              | Income level (raw)               |
-| `MARITAL`  | `marital_status`          | Marital status                   |
-| `EMPLOY1`  | `employment_status`       | Employment status                |
-| `VETERAN3` | `is_veteran`              | Veteran status                   |
-| `CHILDREN` | `num_children`            | Number of children in household  |
-| `RENTHOM1` | `own_or_rent`             | Own or rent home                 |
+## Architecture & Code Structure
 
-### Candidate Targets
-| BRFSS Code | Our Name                  | Description                          |
-|------------|---------------------------|--------------------------------------|
-| `DIABETE4` | `has_diabetes`            | Ever told had diabetes               |
-| `DIABAGE4` | `diabetes_age_diagnosed`  | Age when first told                  |
-| `PREDIAB2` | `has_prediabetes`         | Pre-diabetes status                  |
-| `PDIABTS1` | `last_blood_sugar_test`   | Last blood sugar test                |
-| `ADDEPEV3` | `has_depression`          | Ever told had depressive disorder    |
-| `MENTHLTH` | `days_poor_mental_health` | Days mental health not good (past 30)|
-| `LSATISFY` | `life_satisfaction`       | Satisfaction with life               |
-| `EMTSUPRT` | `emotional_support_freq`  | How often get emotional support      |
-| `SDLONELY` | `loneliness_freq`         | How often feel lonely                |
-| `_HLTHPL2` | `has_insurance`           | Have any health insurance            |
-| `_HCVU654` | `has_insurance_18_64`     | 18–64 with health insurance          |
-| `PRIMINS2` | `insurance_type`          | Primary insurance source             |
-| `PERSDOC3` | `has_personal_doctor`     | Have personal doctor                 |
-| `MEDCOST1` | `cant_afford_doctor`      | Could not afford doctor              |
-| `CHECKUP1` | `time_since_checkup`      | Time since last checkup              |
+The application follows a highly modular structure with clear separation of concerns:
+- **\pp/routes/\**: Handles the web endpoints, rendering views, and coordinating application logic.
+- **\pp/utils/\**: Core logic including robust input validation (\alidation.py\), model ingestion (\model.py\), and data processing.
+- **\pp/model/artifacts/\**: Stores the locally generated machine learning pipeline models.
+- **\	ests/\**: A robust Pytest suite combined with GitHub Actions CI ensuring quality check coverage against regressions, validations, and bounds limits.
+- **\pipeline/\**: Contains scripts for sub-setting and processing raw BRFSS data.
 
-### Health Status
-| BRFSS Code | Our Name                    | Description                            |
-|------------|-----------------------------|----------------------------------------|
-| `GENHLTH`  | `general_health`            | General health (1=Excellent to 5=Poor) |
-| `PHYSHLTH` | `days_poor_physical_health` | Days physical health not good          |
-| `POORHLTH` | `days_poor_health_overall`  | Days poor physical or mental health    |
+## Meet the Team
 
-### Chronic Conditions
-| BRFSS Code | Our Name            | Description                  |
-|------------|---------------------|------------------------------|
-| `CVDINFR4` | `had_heart_attack`  | Ever had heart attack        |
-| `CVDCRHD4` | `has_heart_disease` | Coronary heart disease       |
-| `CVDSTRK3` | `had_stroke`        | Ever had stroke              |
-| `ASTHMA3`  | `had_asthma`        | Ever had asthma              |
-| `CHCCOPD3` | `has_copd`          | COPD / emphysema / bronchitis|
-| `CHCKDNY2` | `has_kidney_disease` | Kidney disease              |
-| `HAVARTH4` | `has_arthritis`     | Arthritis                    |
-| `CHCSCNC1` | `has_skin_cancer`   | Skin cancer (non-melanoma)   |
-| `CHCOCNC1` | `has_other_cancer`  | Melanoma / other cancer      |
-
-### Body Metrics
-| BRFSS Code | Our Name        | Description                         |
-|------------|-----------------|-------------------------------------|
-| `_BMI5`    | `bmi_x100`     | BMI × 100 (divide by 100 for real)  |
-| `_BMI5CAT` | `bmi_category` | BMI category                        |
-| `HTIN4`    | `height_inches` | Height in inches                   |
-| `WTKG3`    | `weight_kg`     | Weight in kilograms                |
-
-### Lifestyle & Behavioral
-| BRFSS Code | Our Name                | Description                       |
-|------------|-------------------------|-----------------------------------|
-| `EXERANY2` | `exercised_past_30d`    | Any exercise past 30 days         |
-| `_TOTINDA` | `any_physical_activity` | Leisure time physical activity    |
-| `SMOKE100` | `smoked_100_cigs_ever`  | Smoked 100+ cigarettes ever       |
-| `_SMOKER3` | `smoking_status`        | Computed smoking status           |
-| `ALCDAY4`  | `alcohol_days_past_30d` | Alcohol days past 30              |
-| `_RFBING6` | `is_binge_drinker`      | Binge drinking                    |
-| `_RFDRHV9` | `is_heavy_drinker`      | Heavy alcohol consumption         |
-| `DRNKANY6` | `any_alcohol_past_30d`  | Any alcohol past 30 days          |
-| `LASTDEN4` | `last_dentist_visit`    | Last dentist visit                |
-| `FLUSHOT7` | `had_flu_shot_12mo`     | Flu shot past 12 months           |
-
-### Social Determinants
-| BRFSS Code | Our Name              | Description                          |
-|------------|-----------------------|--------------------------------------|
-| `SDHEMPLY` | `lost_employment`     | Lost employment / reduced hours      |
-| `FOODSTMP` | `receives_food_stamps`| Received food stamps past 12 months  |
-| `SDHFOOD1` | `food_insecurity`     | Food didn't last / no money for more |
-| `SDHBILLS` | `cant_pay_bills`      | Couldn't pay bills                   |
-| `SDHUTILS` | `cant_pay_utilities`  | Couldn't pay utility bills           |
-| `SDHTRNSP` | `lacks_transportation`| Lack of reliable transportation      |
-| `HOWSAFE1` | `neighborhood_safety` | Neighborhood safe from crime         |
-
-### Disability
-| BRFSS Code | Our Name                  | Description                    |
-|------------|---------------------------|--------------------------------|
-| `DEAF`     | `difficulty_hearing`      | Serious hearing difficulty     |
-| `BLIND`    | `difficulty_seeing`       | Blind or difficulty seeing     |
-| `DECIDE`   | `difficulty_concentrating`| Difficulty concentrating       |
-| `DIFFWALK` | `difficulty_walking`      | Difficulty walking / climbing  |
-| `DIFFDRES` | `difficulty_dressing`     | Difficulty dressing / bathing  |
-| `DIFFALON` | `difficulty_errands`      | Difficulty doing errands alone |
-
-## How To Add Variables
-
-1. Open `pipeline/Subsetting.py`
-2. Find the right category dictionary (or create a new one)
-3. Add an entry: `"BRFSS_CODE": "your_clean_name"`
-4. If you made a new dict, add it to the `RENAME_MAP` loop
-5. Re-run: `uv run python pipeline/Subsetting.py`
-6. Update this README with the new variable
-
-The BRFSS codebook is in `data/raw/` or online at the CDC site.
-
-
-
-Problem Definition: 
- 
-
-We are predicting the probability of having diabetes depending on the features that we have. 
-High amount of diabetes and obesity in the US since we are using data from the US. 
-
-In a medical setting such as this, false negatives are more critical than overall accuracy, since failing to identify individuals who actually have diabetes carries a significantly higher cost than incorrectly flagging someone as at risk.
-
-
-We have decided to look into XGBoost(Extreme Gradient Boosting) model, Random Forest, SVM, LightGBM (or Gradient Boosting variants), Logistic Regression (baseline but important)
-
-Papers where machine learning was used to predict diabetes using similar features:
-
-1. https://www.mdpi.com/2075-4418/15/20/2622
-2.https://www.researchgate.net/publication/389648378_A_Comparative_Study_of_Diabetes_Prediction_Based_on_Lifestyle_Factors_Using_Machine_Learning
-
-3. https://www.researchgate.net/publication/395238407_AI-driven_analysis_of_diabetes_risk_determinants_in_US_adults_Exploring_disease_prevalence_and_health_factors#:~:text=BMI%2C%20age%2C%20general-,health%20status%2C%20income%2C%20physical%20health%20days%2C%20and%20education%20as,those%20reporting%20poor%20general%20health.
-
-4. https://pmc.ncbi.nlm.nih.gov/articles/PMC12669510/#:~:text=The%20survey's%20comprehensive%20scope%20includes,11
-
-5. https://pmc.ncbi.nlm.nih.gov/articles/PMC12669510/#:~:text=The%20survey's%20comprehensive%20scope%20includes,11
-a
-
-6. https://www.researchgate.net/publication/396643677_Diabetes_Prediction_Using_Feature_Selection_Algorithms_and_Boosting-Based_Machine_Learning_Classifiers
-7. https://pmc.ncbi.nlm.nih.gov/articles/PMC12669510/
-8. https://www.researchgate.net/publication/401155832_Identification_of_key_cardiovascular_disease_predictive_factors_from_the_China_Health_and_Retirement_Longitudinal_Study_dataset_using_machine_learning-based_algorithms
-9. https://pmc.ncbi.nlm.nih.gov/articles/PMC10107388/
-10. https://www.researchgate.net/publication/364739441_Cardiovascular_and_Diabetes_Diseases_Classification_Using_Ensemble_Stacking_Classifiers_with_SVM_as_a_Meta_Classifier
-11. https://bmjopen.bmj.com/content/15/3/e096595
-
-
+This project was built collaboratively by Team SCREAM:
+- **Adarsh Tripathi**
+- **David Colín**
+- **Jesper Boon**
+- **Kevine Shima**
+- **Luiscza**
+- **Marcell Matei**
+- **Yenus Ibrahim Ayalew**
