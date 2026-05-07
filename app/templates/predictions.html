@@ -1,0 +1,114 @@
+{% extends "layout.html" %}
+
+{% block title %}Check your risk — SCREAM{% endblock %}
+
+{% block content %}
+<div class="predictor-inner">
+
+    <h2>Check your diabetes risk</h2>
+    <p class="predictor-sub">
+        Fill in a few health indicators. The model will estimate your
+        diabetes risk in seconds.
+    </p>
+
+    {# ── Form ── #}
+    <form class="predict-form" method="POST"
+          action="{{ url_for('predictions.predictions') }}">
+
+        <div class="form-row">
+
+            <div class="form-group {% if form_errors.age %}has-error{% endif %}">
+                <label for="age">Age</label>
+                <input type="number" id="age" name="age"
+                       min="18" max="99" step="1"
+                       value="{{ form_values.get('age', '') }}"
+                       placeholder="e.g. 45" required>
+                {% if form_errors.age %}
+                <span class="field-error">{{ form_errors.age }}</span>
+                {% endif %}
+            </div>
+
+            <div class="form-group {% if form_errors.bmi %}has-error{% endif %}">
+                <label for="bmi">BMI</label>
+                <input type="number" id="bmi" name="bmi"
+                       min="10" max="70" step="0.1"
+                       value="{{ form_values.get('bmi', '') }}"
+                       placeholder="e.g. 27.5" required>
+                {% if form_errors.bmi %}
+                <span class="field-error">{{ form_errors.bmi }}</span>
+                {% endif %}
+            </div>
+
+        </div>
+
+        {% for field, options in form_options.items() %}
+        <div class="form-group {% if form_errors[field] %}has-error{% endif %}">
+            <label for="{{ field }}">{{ field | replace('_', ' ') | title }}</label>
+            <select id="{{ field }}" name="{{ field }}" required>
+                <option value="">Select…</option>
+                {% for val, label in options %}
+                <option value="{{ val }}"
+                    {% if form_values.get(field) == val|string %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
+            </select>
+            {% if form_errors[field] %}
+            <span class="field-error">{{ form_errors[field] }}</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <button type="submit">Estimate my risk</button>
+
+    </form>
+
+    {# ── Result ── #}
+    {% if result is not none %}
+    <div class="risk-result">
+
+        {# Big coloured banner — the main result at a glance #}
+        <div class="risk-category-banner {{ result.risk_category }}">
+            <div>
+                <div class="risk-category-label">Estimated risk category</div>
+                <div class="risk-category-name">{{ result.risk_category | title }} risk</div>
+            </div>
+            <div class="risk-number">{{ result.probability_pct }}%</div>
+        </div>
+
+        <p class="risk-context">
+            The average in this dataset is ~15% — your result is model-based,
+            not a clinical diagnosis.
+        </p>
+
+        <p class="disclaimer-note">{{ medical_disclaimer }}</p>
+
+        {# ── Actionable suggestions ── #}
+        {% if result.suggestions %}
+        <div class="wakeup-section">
+            <h3>What you can change</h3>
+            {% for s in result.suggestions %}
+            <div class="wakeup-card">
+                <div class="wakeup-body">
+                    <strong>{{ s.label }}</strong>
+                    <p class="tip">{{ s.tip }}</p>
+                </div>
+                {% if not s.get('static', False) %}
+                <div class="delta">
+                    −{{ s.delta_pct }}pp → {{ s.new_prob_pct }}%
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <a class="cta" href="{{ url_for('details.index') }}">
+            Explore your results in detail →
+        </a>
+
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

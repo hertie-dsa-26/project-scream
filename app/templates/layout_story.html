@@ -11,9 +11,9 @@
     <header class="story-header">
         <a href="{{ url_for('home.home') }}" class="nav-brand">SCREAM</a>
         <nav>
-            <a href="{{ url_for('predict.predict') }}">Predict</a>
-            <a href="{{ url_for('eda.index') }}">EDA</a>
-            <a href="{{ url_for('models.index') }}">Models</a>
+            <a href="{{ url_for('predictions.predictions') }}">Predictions</a>
+            <a href="{{ url_for('explorer.explorer') }}">Explorer</a>
+            <a href="{{ url_for('details.index') }}">Details</a>
         </nav>
     </header>
     {% block content %}{% endblock %}
