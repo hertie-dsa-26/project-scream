@@ -3,8 +3,11 @@ Model interface for the diabetes risk predictor.
 
 Public API
 ----------
-load_model()   -> None          call once at app startup (in create_app)
+load_model()    -> None           call once at app startup (in create_app)
 predict(inputs) -> PredictResult  call per request from routes
+get_svm()       -> ManualSVM
+get_scaler()    -> StandardScaler
+get_feature_columns() -> list[str]
 
 The rest of this module is private.
 """
@@ -13,10 +16,9 @@ from __future__ import annotations
 
 import json
 import joblib
+import numpy as np
 from pathlib import Path
 from dataclasses import dataclass
-
-import pandas as pd
 
 # ---------------------------------------------------------------------------
 # Paths & cache
@@ -27,17 +29,85 @@ _ARTIFACTS = Path(__file__).parent.parent / "model" / "artifacts"
 _cache: dict = {}
 
 # ---------------------------------------------------------------------------
-# Risk categorisation thresholds (probability, not percentage)
+# ManualSVM class definition (must match retrain_svm.py exactly so joblib
+# can deserialise the saved artifact)
+# ---------------------------------------------------------------------------
+
+class ManualSVM:
+    def __init__(self, lr=0.001, lambda_param=0.01, n_iters=100, class_weight=None):
+        self.lr            = lr
+        self.lambda_param  = lambda_param
+        self.n_iters       = n_iters
+        self.class_weight  = class_weight
+        self.w             = None
+        self.b             = None
+
+    def _compute_class_weights(self, y_internal):
+        classes   = np.unique(y_internal)
+        n_samples = len(y_internal)
+        return {
+            c: n_samples / (len(classes) * np.sum(y_internal == c))
+            for c in classes
+        }
+
+    def fit(self, X, y):
+        n_samples, n_features = X.shape
+        self.w = np.zeros(n_features)
+        self.b = 0
+        y_ = np.where(y == 0, -1, 1)
+        if self.class_weight == "balanced":
+            cw = self._compute_class_weights(y_)
+        elif isinstance(self.class_weight, dict):
+            cw = self.class_weight
+        else:
+            cw = {c: 1.0 for c in np.unique(y_)}
+        sample_weights = np.array([cw[label] for label in y_])
+        for _ in range(self.n_iters):
+            for i in range(n_samples):
+                condition = y_[i] * (np.dot(X[i], self.w) - self.b) >= 1
+                if condition:
+                    self.w -= self.lr * (2 * self.lambda_param * self.w)
+                else:
+                    self.w -= self.lr * (
+                        2 * self.lambda_param * self.w
+                        - sample_weights[i] * np.dot(X[i], y_[i])
+                    )
+                    self.b -= self.lr * sample_weights[i] * y_[i]
+
+    def predict(self, X):
+        linear_output = np.dot(X, self.w) - self.b
+        return (linear_output >= 0).astype(int)
+
+    def decision_score(self, X):
+        """Raw margin score before thresholding. Used for risk scoring."""
+        return np.dot(X, self.w) - self.b
+
+
+# ---------------------------------------------------------------------------
+# Risk scoring via sigmoid on decision score
+#
+# The ManualSVM has no predict_proba. We apply a sigmoid to the raw decision
+# score to map it to [0, 1]. This is a standard approximation for linear SVMs
+# and gives a monotone risk score suitable for thresholding and counterfactuals.
+# It is NOT a calibrated probability — display as "estimated risk score", not %.
+# ---------------------------------------------------------------------------
+
+def _sigmoid(x: float) -> float:
+    return 1.0 / (1.0 + np.exp(-x))
+
+
+# ---------------------------------------------------------------------------
+# Risk categorisation thresholds (applied to sigmoid score)
 # ---------------------------------------------------------------------------
 
 _THRESHOLDS = {
-    "low":      (0.00, 0.10),
-    "moderate": (0.10, 0.25),
-    "high":     (0.25, 1.01),
+    "low":      (0.00, 0.40),
+    "moderate": (0.40, 0.60),
+    "high":     (0.60, 1.01),
 }
 
 # ---------------------------------------------------------------------------
-# Actionable features — modifications we counterfactually test
+# Actionable features
 # ---------------------------------------------------------------------------
 
 _ACTIONABLE: list[dict] = [
@@ -60,11 +130,10 @@ _ACTIONABLE: list[dict] = [
         ),
         "best":        4.0,
         "active_if":   lambda v: v in (1.0, 2.0),
-        "always_show": True,  # show regardless of model delta — evidence is clear
+        "always_show": True,
     },
 ]
 
-# Tip that is always shown (not model-derived)
 _DIET_TIP = {
     "label": "Improve your diet",
     "tip": (
@@ -75,52 +144,57 @@ _DIET_TIP = {
     "static": True,
 }
 
-# ---------------------------------------------------------------------------
-# Median fill-ins for features not collected from the user
-# ---------------------------------------------------------------------------
+_FEATURES = [
+    "general_health",
+    "any_physical_activity",
+    "sex",
+    "age_imputed",
+    "bmi",
+    "education_level",
+    "income_level",
+    "smoking_status",
+    "any_alcohol_past_30d",
+]
 
-_MEDIAN_KEYS = ["height_inches", "weight_kg"]
-
 
 # ---------------------------------------------------------------------------
-# Public dataclass for prediction results
+# Public dataclass
 # ---------------------------------------------------------------------------
 
 @dataclass
 class PredictResult:
-    probability: float          # 0–1
-    probability_pct: float      # 0–100, rounded to 1 dp
+    probability: float          # 0-1 sigmoid score
+    probability_pct: float      # 0-100, rounded to 1 dp
     risk_category: str          # "low" | "moderate" | "high"
-    suggestions: list[dict]     # actionable tips with counterfactual deltas
-    input_features: dict        # the full feature dict passed to the model
+    suggestions: list[dict]
+    input_features: dict
 
 
 # ---------------------------------------------------------------------------
 # Private loaders
 # ---------------------------------------------------------------------------
 
-def _load_pipeline():
-    path = _ARTIFACTS / "pipeline.joblib"
+def _load_svm() -> ManualSVM:
+    path = _ARTIFACTS / "svm_model.pkl"
     if not path.exists():
         raise RuntimeError(
-            f"Model artifact not found at {path}. "
-            "Run: uv run python train_model.py"
+            f"SVM artifact not found at {path}. "
+            "Run: uv run python retrain_svm.py"
         )
     return joblib.load(path)
 
 
-def _load_metrics() -> dict:
-    path = _ARTIFACTS / "metrics.json"
+def _load_scaler():
+    path = _ARTIFACTS / "scaler.pkl"
     if not path.exists():
-        raise RuntimeError(f"Metrics file not found at {path}.")
-    with open(path) as f:
-        return json.load(f)
+        raise RuntimeError(f"Scaler not found at {path}.")
+    return joblib.load(path)
 
 
-def _load_coefficients() -> list[dict]:
-    path = _ARTIFACTS / "coefficients.json"
+def _load_feature_columns() -> list[str]:
+    path = _ARTIFACTS / "feature_columns.json"
     if not path.exists():
-        raise RuntimeError(f"Coefficients file not found at {path}.")
+        raise RuntimeError(f"feature_columns.json not found at {path}.")
     with open(path) as f:
         return json.load(f)
 
@@ -130,80 +204,68 @@ def _load_coefficients() -> list[dict]:
 # ---------------------------------------------------------------------------
 
 def load_model() -> None:
-    """
-    Eagerly load all model artifacts into the module-level cache.
-    Call this once inside create_app() so the first prediction request
-    is not penalised by cold-load latency.
-    """
-    _cache["pipeline"]     = _load_pipeline()
-    _cache["metrics"]      = _load_metrics()
-    _cache["coefficients"] = _load_coefficients()
+    """Eagerly load all model artifacts. Call once in create_app()."""
+    _cache["svm"]             = _load_svm()
+    _cache["scaler"]          = _load_scaler()
+    _cache["feature_columns"] = _load_feature_columns()
 
 
-def get_pipeline():
-    if "pipeline" not in _cache:
-        _cache["pipeline"] = _load_pipeline()
-    return _cache["pipeline"]
+def get_svm() -> ManualSVM:
+    if "svm" not in _cache:
+        _cache["svm"] = _load_svm()
+    return _cache["svm"]
 
 
-def get_metrics() -> dict:
-    if "metrics" not in _cache:
-        _cache["metrics"] = _load_metrics()
-    return _cache["metrics"]
+def get_scaler():
+    if "scaler" not in _cache:
+        _cache["scaler"] = _load_scaler()
+    return _cache["scaler"]
 
 
-def get_coefficients() -> list[dict]:
-    if "coefficients" not in _cache:
-        _cache["coefficients"] = _load_coefficients()
-    return _cache["coefficients"]
+def get_feature_columns() -> list[str]:
+    if "feature_columns" not in _cache:
+        _cache["feature_columns"] = _load_feature_columns()
+    return _cache["feature_columns"]
+
+
+def _score(inputs: dict) -> float:
+    """Scale inputs and return sigmoid(decision_score)."""
+    svm    = get_svm()
+    scaler = get_scaler()
+    X      = np.array([[inputs[f] for f in _FEATURES]])
+    X_s    = scaler.transform(X)
+    return float(_sigmoid(svm.decision_score(X_s)[0]))
 
 
 def predict(validated_inputs: dict) -> PredictResult:
     """
-    Run the model on validated, cleaned inputs from validation.py.
+    Run the SVM on validated inputs from validation.py.
 
     Parameters
     ----------
     validated_inputs : dict
-        Output of validate_prediction_input() — contains age_imputed,
-        bmi_x100, and all categorical features as floats.
-
-    Returns
-    -------
-    PredictResult
+        Output of validate_prediction_input() — must contain all _FEATURES keys.
     """
-    pipeline = get_pipeline()
-    medians  = get_metrics()["numeric_medians"]
+    base_score = _score(validated_inputs)
 
-    # Fill in features not collected from the user
-    full_inputs = {**validated_inputs}
-    for key in _MEDIAN_KEYS:
-        full_inputs.setdefault(key, medians[key])
-
-    # Base prediction
-    df       = pd.DataFrame([full_inputs])
-    base_prob = float(pipeline.predict_proba(df)[0, 1])
-
-    # Risk category
-    risk_category = "high"  # fallback
+    risk_category = "high"
     for category, (lo, hi) in _THRESHOLDS.items():
-        if lo <= base_prob < hi:
+        if lo <= base_score < hi:
             risk_category = category
             break
 
-    # Counterfactual suggestions
     suggestions: list[dict] = []
     for action in _ACTIONABLE:
-        val = full_inputs.get(action["key"])
+        val = validated_inputs.get(action["key"])
         if val is not None and action["active_if"](val):
-            modified  = {**full_inputs, action["key"]: action["best"]}
-            new_prob  = float(pipeline.predict_proba(pd.DataFrame([modified]))[0, 1])
-            delta_pct = (base_prob - new_prob) * 100
+            modified  = {**validated_inputs, action["key"]: action["best"]}
+            new_score = _score(modified)
+            delta_pct = (base_score - new_score) * 100
             if delta_pct > 0.5 or action.get("always_show"):
                 suggestions.append({
                     "label":        action["label"],
                     "tip":          action["tip"],
-                    "new_prob_pct": round(new_prob * 100, 1),
+                    "new_prob_pct": round(new_score * 100, 1),
                     "delta_pct":    round(delta_pct, 1),
                     "static":       False,
                 })
@@ -211,9 +273,9 @@ def predict(validated_inputs: dict) -> PredictResult:
     suggestions.append(_DIET_TIP)
 
     return PredictResult(
-        probability      = base_prob,
-        probability_pct  = round(base_prob * 100, 1),
+        probability      = base_score,
+        probability_pct  = round(base_score * 100, 1),
         risk_category    = risk_category,
         suggestions      = suggestions,
-        input_features   = full_inputs,
+        input_features   = validated_inputs,
     )

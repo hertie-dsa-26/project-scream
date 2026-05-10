@@ -15,7 +15,7 @@ from app.utils.data import (
     FEATURE_LABELS,
     CATEGORICAL_LABELS,
 )
-from app.utils.model import get_coefficients
+from app.utils.model import get_svm, get_feature_columns
 
 details_bp = Blueprint("details", __name__)
 
@@ -64,7 +64,13 @@ def index():
 
     benchmarks   = get_benchmarks()
     overall      = get_overall_stats()
-    coefficients = get_coefficients()
+    svm      = get_svm()
+    features = get_feature_columns()
+    # Build weight rows from SVM weight vector (analogous to logit coefficients)
+    coefficients = [
+        {"feature": f, "coef": round(float(w), 4), "direction": "risk" if w > 0 else "protective"}
+        for f, w in sorted(zip(features, svm.w), key=lambda x: abs(x[1]), reverse=True)
+    ]
     references   = load_references()
 
     inputs = result["input_features"]
@@ -110,31 +116,17 @@ def index():
         except ValueError:
             return coef_name
 
-    # Build readable coefficient rows, one per coefficient entry
+    # Build readable weight rows from SVM weight vector.
+    # SVM weights are analogous to logit coefficients — positive = higher risk.
     coef_rows = []
     for c in coefficients:
-        base   = _base_feature(c["feature"])
-        label  = FEATURE_LABELS.get(base, base.replace("_", " ").title())
-
-        # For one-hot encoded categoricals, show the level too
-        if base != c["feature"]:
-            raw_level = c["feature"].replace(base + "_", "")
-            try:
-                level_val = float(raw_level)
-                cat_label = CATEGORICAL_LABELS.get(base, {}).get(level_val, raw_level)
-                display   = f"{label} — {cat_label}"
-            except ValueError:
-                display = f"{label} — {raw_level}"
-        else:
-            display = label
-
+        feature = c["feature"]
+        label   = FEATURE_LABELS.get(feature, feature.replace("_", " ").title())
         coef_rows.append({
-            "display":     display,
-            "feature":     base,
-            "coef":        round(c["coef"], 3),
-            "odds_ratio":  round(c["odds_ratio"], 3),
-            "p_value":     c["p_value"],
-            "direction":   "risk" if c["coef"] > 0 else "protective",
+            "display":   label,
+            "feature":   feature,
+            "coef":      round(c["coef"], 4),
+            "direction": c["direction"],
         })
 
     # ── Citations ─────────────────────────────────────────────────────────

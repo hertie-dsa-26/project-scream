@@ -158,10 +158,9 @@
         How the model works
     </h2>
     <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
-        The chart below shows each feature's odds ratio from the logistic
-        regression model. An odds ratio above 1 means the feature is associated
-        with higher diabetes risk; below 1 means lower risk. Features are sorted
-        by their effect size.
+        The chart below shows each feature's weight from the SVM model.
+        A positive weight means the feature pushes toward higher diabetes risk;
+        a negative weight means lower risk. Features are sorted by absolute effect size.
     </p>
 
     <div id="coef-chart" style="width: 100%; height: 500px;"></div>
@@ -176,10 +175,10 @@
                                letter-spacing: 0.06em;">Feature</th>
                     <th style="text-align: right; padding: 0.5rem 0.75rem; color: var(--muted);
                                font-weight: 500; font-size: 0.72rem; text-transform: uppercase;
-                               letter-spacing: 0.06em;">Odds ratio</th>
+                               letter-spacing: 0.06em;">SVM weight</th>
                     <th style="text-align: right; padding: 0.5rem 0.75rem; color: var(--muted);
                                font-weight: 500; font-size: 0.72rem; text-transform: uppercase;
-                               letter-spacing: 0.06em;">Coefficient</th>
+                               letter-spacing: 0.06em;">Direction</th>
                     <th style="text-align: center; padding: 0.5rem 0.75rem; color: var(--muted);
                                font-weight: 500; font-size: 0.72rem; text-transform: uppercase;
                                letter-spacing: 0.06em;">Direction</th>
@@ -191,11 +190,7 @@
                     <td style="padding: 0.5rem 0.75rem;">{{ row.display }}</td>
                     <td style="padding: 0.5rem 0.75rem; text-align: right;
                                font-family: 'DM Mono', monospace;">
-                        {{ "%.3f"|format(row.odds_ratio) }}
-                    </td>
-                    <td style="padding: 0.5rem 0.75rem; text-align: right;
-                               font-family: 'DM Mono', monospace;">
-                        {{ "%.3f"|format(row.coef) }}
+                        {{ "%.4f"|format(row.coef) }}
                     </td>
                     <td style="padding: 0.5rem 0.75rem; text-align: center;">
                         {% if row.direction == "risk" %}
@@ -250,9 +245,9 @@
 
 {% block scripts %}
 <script>
-// Odds ratio bar chart
+// SVM weight bar chart
 var features = {{ coef_rows | map(attribute='display') | list | tojson }};
-var oddsRatios = {{ coef_rows | map(attribute='odds_ratio') | list | tojson }};
+var oddsRatios = {{ coef_rows | map(attribute='coef') | list | tojson }};
 var directions = {{ coef_rows | map(attribute='direction') | list | tojson }};
 
 var colors = directions.map(d => d === 'risk' ? '#fca5a5' : '#86efac');
@@ -267,12 +262,12 @@ var trace = {
         color: colors,
         line: { color: lineColors, width: 1 }
     },
-    hovertemplate: '<b>%{y}</b><br>Odds ratio: %{x:.3f}<extra></extra>',
+    hovertemplate: '<b>%{y}</b><br>SVM weight: %{x:.4f}<extra></extra>',
 };
 
 var layout = {
     xaxis: {
-        title: 'Odds ratio',
+        title: 'SVM weight',
         zeroline: false,
     },
     yaxis: {

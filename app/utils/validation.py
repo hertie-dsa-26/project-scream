@@ -88,20 +88,21 @@ def validate_prediction_input(
         elif field == "weight_kg":
             cleaned["weight_kg"] = value
 
-    # Compute bmi_x100 from height and weight if both valid
+    # Compute bmi from height and weight if both valid
     if "_height_cm" in cleaned and "weight_kg" in cleaned:
         h_m = cleaned.pop("_height_cm") / 100.0   # cm -> metres
         bmi = cleaned["weight_kg"] / (h_m ** 2)
-        cleaned["bmi_x100"] = round(bmi * 100, 1)
         # Sanity-check computed BMI falls in a plausible range
         if not (10.0 <= bmi <= 70.0):
             errors["weight_kg"] = (
                 "The height and weight combination gives an implausible BMI "
                 f"({bmi:.1f}). Please double-check your entries."
             )
-            cleaned.pop("bmi_x100", None)
+        else:
+            cleaned["bmi"] = round(bmi, 2)   # SVM expects raw BMI, not bmi_x100
+        cleaned.pop("weight_kg", None)       # weight_kg not a model feature
     elif "_height_cm" in cleaned:
-        cleaned.pop("_height_cm", None)  # height present but weight errored
+        cleaned.pop("_height_cm", None)
 
     # --- Categorical fields ---
     for field, valid_codes in _CATEGORICAL_FIELDS.items():

@@ -15,21 +15,21 @@ from app.utils.model import load_model, predict, PredictResult
 
 @pytest.fixture(scope="module", autouse=True)
 def loaded_model():
-    """Load model artifacts once for the whole module."""
+    """Load SVM artifacts once for the whole module."""
     load_model()
 
 
 def _valid_inputs(**overrides) -> dict:
     """Return a valid cleaned input dict as produced by validation.py."""
     base = {
-        "age_imputed":           45.0,
-        "bmi_x100":              2750.0,
-        "sex":                   1.0,
         "general_health":        3.0,
+        "any_physical_activity": 1.0,
+        "sex":                   1.0,
+        "age_imputed":           45.0,
+        "bmi":                   27.5,   # raw BMI, not bmi_x100
         "education_level":       4.0,
         "income_level":          5.0,
         "smoking_status":        4.0,
-        "any_physical_activity": 1.0,
         "any_alcohol_past_30d":  1.0,
     }
     base.update(overrides)
@@ -96,7 +96,7 @@ def test_input_features_contains_user_inputs():
 def test_low_risk_category():
     """Young, healthy profile should tend toward low risk."""
     result = predict(_valid_inputs(
-        age_imputed=25.0, bmi_x100=2200.0,
+        age_imputed=25.0, bmi=20.0,
         general_health=1.0, any_physical_activity=1.0,
         smoking_status=4.0, income_level=7.0,
     ))
@@ -106,7 +106,7 @@ def test_low_risk_category():
 def test_high_risk_category():
     """Older, high-risk profile should tend toward high risk."""
     result = predict(_valid_inputs(
-        age_imputed=75.0, bmi_x100=4000.0,
+        age_imputed=75.0, bmi=40.0,
         general_health=5.0, any_physical_activity=2.0,
         smoking_status=1.0, income_level=1.0,
     ))
@@ -165,12 +165,12 @@ def test_boundary_age_max():
 
 
 def test_boundary_bmi_min():
-    result = predict(_valid_inputs(bmi_x100=1000.0))
+    result = predict(_valid_inputs(bmi=10.0))
     assert isinstance(result, PredictResult)
 
 
 def test_boundary_bmi_max():
-    result = predict(_valid_inputs(bmi_x100=7000.0))
+    result = predict(_valid_inputs(bmi=70.0))
     assert isinstance(result, PredictResult)
 
 

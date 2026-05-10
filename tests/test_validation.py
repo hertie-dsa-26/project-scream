@@ -44,11 +44,14 @@ def test_valid_input_maps_age_correctly():
     assert cleaned["age_imputed"] == 52.0
 
 
-def test_valid_input_computes_bmi_x100():
-    """height=175cm, weight=75kg -> BMI=24.49 -> bmi_x100=2449"""
+def test_valid_input_computes_bmi():
+    """height=175cm, weight=75kg -> BMI=24.49, stored as raw bmi"""
     cleaned, _ = validate_prediction_input(_valid_form(height_cm="175", weight_kg="75"))
     expected_bmi = 75 / (1.75 ** 2)
-    assert cleaned["bmi_x100"] == pytest.approx(expected_bmi * 100, abs=1.0)
+    assert cleaned["bmi"] == pytest.approx(expected_bmi, abs=0.01)
+    # weight_kg should NOT be in cleaned (not a model feature)
+    assert "weight_kg" not in cleaned
+    assert "bmi_x100" not in cleaned
 
 
 def test_valid_input_casts_categoricals_to_float():
