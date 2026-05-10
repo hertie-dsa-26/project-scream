@@ -179,9 +179,6 @@
                     <th style="text-align: right; padding: 0.5rem 0.75rem; color: var(--muted);
                                font-weight: 500; font-size: 0.72rem; text-transform: uppercase;
                                letter-spacing: 0.06em;">Direction</th>
-                    <th style="text-align: center; padding: 0.5rem 0.75rem; color: var(--muted);
-                               font-weight: 500; font-size: 0.72rem; text-transform: uppercase;
-                               letter-spacing: 0.06em;">Direction</th>
                 </tr>
             </thead>
             <tbody>
@@ -246,7 +243,7 @@
 {% block scripts %}
 <script>
 // SVM weight bar chart
-var features = {{ coef_rows | map(attribute='display') | list | tojson }};
+var features = {{ coef_rows | map(attribute='chart_label') | list | tojson }};
 var oddsRatios = {{ coef_rows | map(attribute='coef') | list | tojson }};
 var directions = {{ coef_rows | map(attribute='direction') | list | tojson }};
 
@@ -276,7 +273,7 @@ var layout = {
     },
     shapes: [{
         type: 'line',
-        x0: 1, x1: 1,
+        x0: 0, x1: 0,
         y0: -0.5, y1: features.length - 0.5,
         line: { color: '#888', width: 1, dash: 'dot' }
     }],

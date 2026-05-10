@@ -118,15 +118,35 @@ def index():
 
     # Build readable weight rows from SVM weight vector.
     # SVM weights are analogous to logit coefficients — positive = higher risk.
+    # Short clean labels for the chart
+    _CHART_LABELS = {
+        "sex":                   "Sex",
+        "any_physical_activity": "Physical activity",
+        "any_alcohol_past_30d":  "Alcohol (past 30 days)",
+        "smoking_status":        "Smoking status",
+        "general_health":        "General health",
+        "age_imputed":           "Age",
+        "bmi":                   "BMI",
+        "education_level":       "Education level",
+        "income_level":          "Income level",
+    }
+    # Longer notes for the table
+    _FEATURE_NOTES = {
+        "sex":                   "Sex (1=Male, 2=Female)",
+        "any_physical_activity": "Physical activity (1=Active, 2=Inactive)",
+        "any_alcohol_past_30d":  "Alcohol past 30 days (1=Yes, 2=No)",
+        "smoking_status":        "Smoking status (1=Daily, 2=Some days, 3=Former, 4=Never)",
+        "general_health":        "General health (1=Excellent → 5=Poor)",
+    }
     coef_rows = []
     for c in coefficients:
         feature = c["feature"]
-        label   = FEATURE_LABELS.get(feature, feature.replace("_", " ").title())
         coef_rows.append({
-            "display":   label,
-            "feature":   feature,
-            "coef":      round(c["coef"], 4),
-            "direction": c["direction"],
+            "display":     _FEATURE_NOTES.get(feature) or _CHART_LABELS.get(feature, feature.replace("_", " ").title()),
+            "chart_label": _CHART_LABELS.get(feature, feature.replace("_", " ").title()),
+            "feature":     feature,
+            "coef":        round(c["coef"], 4),
+            "direction":   c["direction"],
         })
 
     # ── Citations ─────────────────────────────────────────────────────────
