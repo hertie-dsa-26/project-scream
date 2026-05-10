@@ -52,14 +52,15 @@ _ACTIONABLE: list[dict] = [
         "active_if": lambda v: v == 2.0,
     },
     {
-        "key":       "smoking_status",
-        "label":     "Quit smoking",
-        "tip":       (
+        "key":         "smoking_status",
+        "label":       "Quit smoking",
+        "tip":         (
             "Quitting smoking improves metabolic health and reduces "
             "long-term diabetes risk."
         ),
-        "best":      4.0,
-        "active_if": lambda v: v in (1.0, 2.0),
+        "best":        4.0,
+        "active_if":   lambda v: v in (1.0, 2.0),
+        "always_show": True,  # show regardless of model delta — evidence is clear
     },
 ]
 
@@ -198,7 +199,7 @@ def predict(validated_inputs: dict) -> PredictResult:
             modified  = {**full_inputs, action["key"]: action["best"]}
             new_prob  = float(pipeline.predict_proba(pd.DataFrame([modified]))[0, 1])
             delta_pct = (base_prob - new_prob) * 100
-            if delta_pct > 0.5:
+            if delta_pct > 0.5 or action.get("always_show"):
                 suggestions.append({
                     "label":        action["label"],
                     "tip":          action["tip"],

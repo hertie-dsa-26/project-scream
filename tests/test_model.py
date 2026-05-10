@@ -129,18 +129,19 @@ def test_active_user_gets_no_activity_suggestion():
     assert not any("activ" in l.lower() for l in labels)
 
 
-def test_smoker_gets_quit_suggestion_if_delta_meaningful():
+def test_smoker_always_gets_quit_suggestion():
     """
-    Quit smoking suggestion only fires if the counterfactual delta exceeds 0.5pp.
-    We test that the suggestion either appears (with a positive delta) or is
-    correctly suppressed — not that it always appears.
+    Quit smoking suggestion must always appear for current smokers (codes 1 and 2),
+    regardless of the model's counterfactual delta. Evidence for smoking -> diabetes
+    risk is clear in the literature and should not be suppressed by a small model effect.
     """
-    result = predict(_valid_inputs(smoking_status=1.0))
-    non_static = [s for s in result.suggestions if not s.get("static")]
-    smoking_suggestions = [s for s in non_static if "smok" in s["label"].lower()]
-    # If it appears, the delta must be positive
-    for s in smoking_suggestions:
-        assert s["delta_pct"] > 0
+    for code in [1.0, 2.0]:
+        result = predict(_valid_inputs(smoking_status=code))
+        non_static = [s for s in result.suggestions if not s.get("static")]
+        labels = [s["label"].lower() for s in non_static]
+        assert any("smok" in l for l in labels), (
+            f"Expected quit-smoking suggestion for smoking_status={code}, got: {labels}"
+        )
 
 
 def test_suggestion_delta_is_positive():
