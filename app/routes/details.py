@@ -20,7 +20,7 @@ from app.utils.model import get_coefficients
 details_bp = Blueprint("details", __name__)
 
 # Which features get the prominent actionable treatment at the top
-_ACTIONABLE_KEYS = {"any_physical_activity", "smoking_status"}
+_ACTIONABLE_KEYS = {"any_physical_activity", "smoking_status", "any_alcohol_past_30d"}
 
 # Features where a lower value is better (for directional arrow logic)
 _LOWER_IS_BETTER = {"bmi_x100", "smoking_status", "general_health", "any_alcohol_past_30d"}
