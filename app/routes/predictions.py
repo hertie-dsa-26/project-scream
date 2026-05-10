@@ -58,6 +58,18 @@ FORM_OPTIONS = {
     ],
 }
 
+# Human-readable labels for fields whose auto-formatted key names are unclear.
+# predictions.html uses this instead of the default key -> title formatting.
+FORM_LABELS = {
+    "sex":                   "Sex",
+    "general_health":        "General health",
+    "education_level":       "Education level",
+    "income_level":          "Income level",
+    "smoking_status":        "Smoking status",
+    "any_physical_activity": "Any physical activity in the past month?",
+    "any_alcohol_past_30d":  "Any alcohol in the past 30 days?",
+}
+
 
 @predictions_bp.route("/", methods=["GET", "POST"])
 def predictions():
@@ -81,6 +93,7 @@ def predictions():
     return render_template(
         "predictions.html",
         form_options  = FORM_OPTIONS,
+        form_labels   = FORM_LABELS,
         form_values   = request.form,
         form_errors   = form_errors,
         result        = result,

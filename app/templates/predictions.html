@@ -95,7 +95,7 @@
         {# Categorical fields #}
         {% for field, options in form_options.items() %}
         <div class="form-group {% if form_errors[field] %}has-error{% endif %}">
-            <label for="{{ field }}">{{ field | replace('_', ' ') | title }}</label>
+            <label for="{{ field }}">{{ form_labels.get(field, field | replace('_', ' ') | title) }}</label>
             <select id="{{ field }}" name="{{ field }}" required>
                 <option value="">Select…</option>
                 {% for val, label in options %}
