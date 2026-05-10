@@ -79,7 +79,19 @@
                 {% for card in actionable_cards %}
                 <tr style="border-bottom: 1px solid var(--border);">
                     <td style="padding: 0.6rem 0.75rem; font-weight: 500;">
-                        {{ card.label }}
+                        <span style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                            {{ card.label }}
+                            {% if card.key == "smoking_status" %}
+                            <span class="tooltip-wrap">
+                                <button type="button" class="tooltip-btn" style="border-color: #854d0e; color: #854d0e;">!</button>
+                                <div class="tooltip-box" role="tooltip">
+                                    This result may not fully reflect the broader evidence.
+                                    Most studies associate smoking with higher diabetes risk.
+                                    Please consult a healthcare professional for personalised advice.
+                                </div>
+                            </span>
+                            {% endif %}
+                        </span>
                     </td>
                     <td style="padding: 0.6rem 0.75rem; text-align: center;">
                         {{ card.user_value }}
