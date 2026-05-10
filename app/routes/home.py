@@ -78,5 +78,6 @@ def _build_map() -> str:
 def home():
     return render_template(
         "home.html",
-        map_json = _build_map(),
+        map_json    = _build_map(),
+        states_json = json.dumps(_STATES),
     )
