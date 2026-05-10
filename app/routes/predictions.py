@@ -70,6 +70,32 @@ FORM_LABELS = {
     "any_alcohol_past_30d":  "Any alcohol in the past 30 days?",
 }
 
+# Tooltip text shown next to the label for fields that need extra explanation.
+FORM_TOOLTIPS = {
+    "general_health": (
+        "Rate your overall health: Excellent means no limitations or health issues; "
+        "Very good means minor issues; Good means some ongoing conditions; "
+        "Fair means significant health problems affecting daily life; "
+        "Poor means severe or disabling health conditions."
+    ),
+    "education_level": (
+        "Select the highest level of education you have completed. "
+        "Grade 12 / GED or higher includes any college or postgraduate education."
+    ),
+    "income_level": (
+        "Select your total annual household income before taxes, "
+        "including all sources for everyone living in your home."
+    ),
+    "any_physical_activity": (
+        "Any leisure-time physical activity counts — walking, sports, gym, gardening, "
+        "or any other exercise done in the past 30 days outside of your regular job."
+    ),
+    "any_alcohol_past_30d": (
+        "Any drink counts — beer, wine, spirits, or any other alcoholic beverage "
+        "consumed at least once in the past 30 days."
+    ),
+}
+
 
 @predictions_bp.route("/", methods=["GET", "POST"])
 def predictions():
@@ -92,9 +118,10 @@ def predictions():
 
     return render_template(
         "predictions.html",
-        form_options  = FORM_OPTIONS,
-        form_labels   = FORM_LABELS,
-        form_values   = request.form,
-        form_errors   = form_errors,
-        result        = result,
+        form_options   = FORM_OPTIONS,
+        form_labels    = FORM_LABELS,
+        form_tooltips  = FORM_TOOLTIPS,
+        form_values    = request.form,
+        form_errors    = form_errors,
+        result         = result,
     )

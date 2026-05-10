@@ -162,6 +162,72 @@ h1 {
     line-height: 1.4;
 }
 
+/* ── Tooltip ── */
+.label-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.tooltip-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.tooltip-btn {
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid var(--muted);
+    background: none;
+    color: var(--muted);
+    font-size: 0.65rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.tooltip-btn:hover,
+.tooltip-btn:focus { border-color: var(--accent); color: var(--accent); outline: none; }
+
+.tooltip-box {
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 6px);
+    transform: translateX(-50%);
+    width: 260px;
+    background: var(--text);
+    color: var(--bg);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    padding: 0.6rem 0.8rem;
+    border-radius: 6px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+/* Arrow */
+.tooltip-box::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--text);
+}
+
+.tooltip-wrap:hover .tooltip-box,
+.tooltip-btn:focus + .tooltip-box { display: block; }
+
 /* ── Predictor page ── */
 .predictor-inner {
     max-width: 580px;

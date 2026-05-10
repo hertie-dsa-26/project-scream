@@ -95,7 +95,19 @@
         {# Categorical fields #}
         {% for field, options in form_options.items() %}
         <div class="form-group {% if form_errors[field] %}has-error{% endif %}">
-            <label for="{{ field }}">{{ form_labels.get(field, field | replace('_', ' ') | title) }}</label>
+            <div class="label-row">
+                <label for="{{ field }}">
+                    {{ form_labels.get(field, field | replace('_', ' ') | title) }}
+                </label>
+                {% if form_tooltips.get(field) %}
+                <div class="tooltip-wrap">
+                    <button type="button" class="tooltip-btn" aria-label="More info">?</button>
+                    <div class="tooltip-box" role="tooltip">
+                        {{ form_tooltips[field] }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
             <select id="{{ field }}" name="{{ field }}" required>
                 <option value="">Select…</option>
                 {% for val, label in options %}
