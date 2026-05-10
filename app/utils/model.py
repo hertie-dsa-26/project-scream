@@ -230,9 +230,10 @@ def get_feature_columns() -> list[str]:
 
 def _score(inputs: dict) -> float:
     """Scale inputs and return sigmoid(decision_score)."""
+    import pandas as pd
     svm    = get_svm()
     scaler = get_scaler()
-    X      = np.array([[inputs[f] for f in _FEATURES]])
+    X      = pd.DataFrame([[inputs[f] for f in _FEATURES]], columns=_FEATURES)
     X_s    = scaler.transform(X)
     return float(_sigmoid(svm.decision_score(X_s)[0]))
 
