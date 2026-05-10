@@ -38,6 +38,22 @@ def _fmt_value(feature: str, value: float) -> str:
     return f"{value:.2f}"
 
 
+def _fmt_benchmark(feature: str, stats) -> str:
+    """Format a benchmark value for display in the comparison table."""
+    if stats is None:
+        return "N/A"
+    if isinstance(stats, dict):
+        if "pct_yes" in stats:
+            return f"Yes ({stats['pct_yes'] * 100:.0f}%)"
+        mode_val = stats.get("mode")
+        mode_pct = stats.get("mode_pct")
+        label = CATEGORICAL_LABELS.get(feature, {}).get(mode_val, str(mode_val))
+        if mode_pct is not None:
+            return f"{label} ({mode_pct * 100:.0f}%)"
+        return str(label)
+    return _fmt_value(feature, float(stats))
+
+
 @details_bp.route("/")
 def index():
     result = session.get("last_result")
@@ -80,8 +96,8 @@ def index():
             "label":         FEATURE_LABELS.get(key, key),
             "user_value":    _fmt_value(key, user_val),
             "user_raw":      user_val,
-            "diabetic_avg":  _fmt_value(key, diabetic_avg) if diabetic_avg is not None else "N/A",
-            "nondiab_avg":   _fmt_value(key, nondiab_avg)  if nondiab_avg  is not None else "N/A",
+            "diabetic_avg":  _fmt_benchmark(key, diabetic_avg),
+            "nondiab_avg":   _fmt_benchmark(key, nondiab_avg),
         })
 
     # ── Full model feature rows ───────────────────────────────────────────

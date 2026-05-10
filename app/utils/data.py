@@ -98,14 +98,24 @@ def _diabetes_binary(df: pd.DataFrame) -> pd.Series:
 
 def get_benchmarks() -> dict:
     """
-    Return per-feature means split by diabetes status, cached.
+    Return per-feature benchmarks split by diabetes status, cached.
 
     Returns
     -------
     {
-      "diabetic":     {feature: mean, ...},
-      "non_diabetic": {feature: mean, ...},
+      "diabetic":     {feature: benchmark, ...},
+      "non_diabetic": {feature: benchmark, ...},
     }
+
+    benchmark is:
+    - float (mean) for numeric features
+    - dict for categorical features:
+        {
+          "mean":     float,
+          "mode":     float,
+          "mode_pct": float,   # 0..1
+          "pct_yes":  float,   # 0..1 (only for binary yes/no with codes 1 and 2)
+        }
     """
     if "benchmarks" not in _cache:
         df       = load_brfss()
@@ -114,15 +124,35 @@ def get_benchmarks() -> dict:
         diabetic     = df[diabetes == 1]
         non_diabetic = df[diabetes == 0]
 
+        def _bench_for_group(group_df: pd.DataFrame) -> dict:
+            out: dict = {}
+            for feature in _BENCHMARK_FEATURES:
+                if feature not in group_df.columns:
+                    continue
+                series = group_df[feature].dropna()
+                if series.empty:
+                    continue
+
+                if feature in CATEGORICAL_LABELS:
+                    counts   = series.value_counts(dropna=True)
+                    mode_val = float(counts.index[0])
+                    mode_pct = float(counts.iloc[0] / counts.sum())
+                    summary  = {
+                        "mean":     round(float(series.mean()), 3),
+                        "mode":     mode_val,
+                        "mode_pct": round(mode_pct, 3),
+                    }
+                    labels = CATEGORICAL_LABELS.get(feature, {})
+                    if set(labels.keys()) == {1.0, 2.0}:
+                        summary["pct_yes"] = round(float((series == 1.0).mean()), 3)
+                    out[feature] = summary
+                else:
+                    out[feature] = round(float(series.mean()), 3)
+            return out
+
         _cache["benchmarks"] = {
-            "diabetic":     {
-                f: round(diabetic[f].mean(), 3)
-                for f in _BENCHMARK_FEATURES if f in diabetic.columns
-            },
-            "non_diabetic": {
-                f: round(non_diabetic[f].mean(), 3)
-                for f in _BENCHMARK_FEATURES if f in non_diabetic.columns
-            },
+            "diabetic":     _bench_for_group(diabetic),
+            "non_diabetic": _bench_for_group(non_diabetic),
         }
     return _cache["benchmarks"]
 
