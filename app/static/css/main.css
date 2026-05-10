@@ -339,6 +339,19 @@ h1 {
 }
 .predict-form button[type="submit"]:hover { opacity: 0.85; }
 
+.btn-clear {
+    padding: 0.65rem 1.25rem;
+    background: none;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+.btn-clear:hover { border-color: var(--text); color: var(--text); }
+
 /* ── Risk result box ── */
 .risk-result {
     margin-top: 2.5rem;

@@ -127,6 +127,10 @@
 
     </form>
 
+    <form method="POST" action="{{ url_for('predictions.clear') }}" style="margin-top: 0.75rem;">
+        <button type="submit" class="btn-clear">Clear form</button>
+    </form>
+
     {# ── Result ── #}
     {% if result is not none %}
     <div class="risk-result">
