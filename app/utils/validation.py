@@ -16,16 +16,18 @@ from __future__ import annotations
 # ---------------------------------------------------------------------------
 
 _NUMERIC_FIELDS: dict[str, tuple] = {
-    # field_name: (min_value, max_value, scale_factor_applied_after_validation)
-    "age":  (18.0,  99.0,  1.0),    # stored as age_imputed directly
-    "bmi":  (10.0,  70.0,  100.0),  # stored as bmi_x100 = bmi * 100
+    # field_name: (min_value, max_value)
+    # Form always submits height_cm and weight_kg; JS converts imperial before submit.
+    "age":        (18.0,  99.0),
+    "height_cm":  (100.0, 250.0),   # cm; ~3ft 3in to ~8ft 2in
+    "weight_kg":  (30.0,  300.0),   # kg; ~66lbs to ~661lbs
 }
 
 _CATEGORICAL_FIELDS: dict[str, set[int]] = {
     "sex":                   {1, 2},
     "general_health":        {1, 2, 3, 4, 5},
-    "education_level":       {1, 2, 3, 4},          # pipeline trained on codes 1–4 only
-    "income_level":          {1, 2, 3, 4, 5, 6, 7},  # pipeline trained on codes 1–7 only
+    "education_level":       {1, 2, 3, 4},          # pipeline trained on codes 1-4 only
+    "income_level":          {1, 2, 3, 4, 5, 6, 7},  # pipeline trained on codes 1-7 only
     "smoking_status":        {1, 2, 3, 4},
     "any_physical_activity": {1, 2},
     "any_alcohol_past_30d":  {1, 2},
@@ -33,7 +35,8 @@ _CATEGORICAL_FIELDS: dict[str, set[int]] = {
 
 _FIELD_LABELS: dict[str, str] = {
     "age":                   "Age",
-    "bmi":                   "BMI",
+    "height_cm":             "Height",
+    "weight_kg":             "Weight",
     "sex":                   "Sex",
     "general_health":        "General health",
     "education_level":       "Education level",
@@ -60,7 +63,7 @@ def validate_prediction_input(
     cleaned: dict[str, float] = {}
 
     # --- Numeric fields ---
-    for field, (min_val, max_val, scale) in _NUMERIC_FIELDS.items():
+    for field, (min_val, max_val) in _NUMERIC_FIELDS.items():
         label = _FIELD_LABELS[field]
         raw = form_data.get(field, "").strip()
 
@@ -78,11 +81,27 @@ def validate_prediction_input(
             errors[field] = f"{label} must be between {min_val:.0f} and {max_val:.0f}."
             continue
 
-        # Map to the feature name the model expects
         if field == "age":
             cleaned["age_imputed"] = value
-        elif field == "bmi":
-            cleaned["bmi_x100"] = value * scale  # bmi * 100
+        elif field == "height_cm":
+            cleaned["_height_cm"] = value   # temp key, used for BMI below
+        elif field == "weight_kg":
+            cleaned["weight_kg"] = value
+
+    # Compute bmi_x100 from height and weight if both valid
+    if "_height_cm" in cleaned and "weight_kg" in cleaned:
+        h_m = cleaned.pop("_height_cm") / 100.0   # cm -> metres
+        bmi = cleaned["weight_kg"] / (h_m ** 2)
+        cleaned["bmi_x100"] = round(bmi * 100, 1)
+        # Sanity-check computed BMI falls in a plausible range
+        if not (10.0 <= bmi <= 70.0):
+            errors["weight_kg"] = (
+                "The height and weight combination gives an implausible BMI "
+                f"({bmi:.1f}). Please double-check your entries."
+            )
+            cleaned.pop("bmi_x100", None)
+    elif "_height_cm" in cleaned:
+        cleaned.pop("_height_cm", None)  # height present but weight errored
 
     # --- Categorical fields ---
     for field, valid_codes in _CATEGORICAL_FIELDS.items():
