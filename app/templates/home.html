@@ -75,7 +75,8 @@
 
     // Southern belt states for zoom + border highlight
     var SOUTHERN_BELT = [
-        'AL', 'MS', 'LA', 'AR', 'TN', 'GA', 'SC', 'NC', 'WV', 'KY', 'OK', 'TX', 'FL'
+        'AL', 'MS', 'LA', 'AR', 'GA', 'SC', 'NC', 'WV', 'KY', 'OK', 'TX', 'FL'
+        // TN (FIPS 47) is absent from the BRFSS subset and shows no data
     ];
 
     // All states in the choropleth (must match order in home.py _STATES list)
@@ -110,6 +111,7 @@
     // from/to: { lon, lat, scale }
     // duration: ms, onComplete: callback fired when done
     var _geoAnimFrame = null;
+    var _prevStep = 0;  // track previous step to know if we need to zoom out
     function animateGeo(from, to, duration, onComplete) {
         if (_geoAnimFrame) cancelAnimationFrame(_geoAnimFrame);
         var start = null;
@@ -158,7 +160,6 @@
                     { lon: -88, lat: 32, scale: 3 },
                     600,
                     function() {
-                        // Apply border highlights after zoom completes
                         Plotly.restyle('story-map', {
                             'marker.line.color': [southernBeltMarker().color],
                             'marker.line.width': [southernBeltMarker().width],
@@ -167,19 +168,23 @@
                 );
                 Plotly.relayout('story-map', { 'title.text': stepUpdates[index].title });
             } else {
-                animateGeo(
-                    { lon: -88, lat: 32, scale: 3 },
-                    { lon: -96, lat: 38, scale: 1 },
-                    600,
-                    function() {
-                        Plotly.restyle('story-map', {
-                            'marker.line.color': [defaultMarker().color],
-                            'marker.line.width': [defaultMarker().width],
-                        }, [0]);
-                    }
-                );
+                // Only animate zoom-out if we're actually coming from the southern belt step
+                if (_prevStep === 1) {
+                    animateGeo(
+                        { lon: -88, lat: 32, scale: 3 },
+                        { lon: -96, lat: 38, scale: 1 },
+                        600,
+                        function() {
+                            Plotly.restyle('story-map', {
+                                'marker.line.color': [defaultMarker().color],
+                                'marker.line.width': [defaultMarker().width],
+                            }, [0]);
+                        }
+                    );
+                }
                 Plotly.relayout('story-map', { 'title.text': stepUpdates[index].title });
             }
+            _prevStep = index;
         });
 
     window.addEventListener('resize', scroller.resize);

@@ -174,6 +174,48 @@ def get_overall_stats() -> dict:
     return _cache["overall_stats"]
 
 
+# FIPS code -> state abbreviation mapping for BRFSS _STATE column
+_FIPS_TO_STATE: dict[int, str] = {
+    1: "AL", 2: "AK", 4: "AZ", 5: "AR", 6: "CA", 8: "CO", 9: "CT",
+    10: "DE", 11: "DC", 12: "FL", 13: "GA", 15: "HI", 16: "ID",
+    17: "IL", 18: "IN", 19: "IA", 20: "KS", 21: "KY", 22: "LA",
+    23: "ME", 24: "MD", 25: "MA", 26: "MI", 27: "MN", 28: "MS",
+    29: "MO", 30: "MT", 31: "NE", 32: "NV", 33: "NH", 34: "NJ",
+    35: "NM", 36: "NY", 37: "NC", 38: "ND", 39: "OH", 40: "OK",
+    41: "OR", 42: "PA", 44: "RI", 45: "SC", 46: "SD",
+    # 47: "TN",  # Tennessee absent from this BRFSS subset
+    48: "TX", 49: "UT", 50: "VT", 51: "VA", 53: "WA", 54: "WV",
+    55: "WI", 56: "WY",
+}
+
+
+def get_state_prevalence() -> dict[str, float]:
+    """
+    Compute diabetes prevalence (% of adults) per state from the BRFSS parquet.
+    Returns {state_abbr: prevalence_pct} cached after first call.
+    """
+    if "state_prevalence" not in _cache:
+        df       = load_brfss()
+        diabetes = _diabetes_binary(df)
+
+        # Drop rows with unknown diabetes status or unknown state
+        valid = df["state_fips"].notna() & diabetes.notna()
+        df_v  = df[valid].copy()
+        dia_v = diabetes[valid]
+
+        # Group by state FIPS and compute % diabetic
+        result = {}
+        for fips, group_idx in df_v.groupby("state_fips").groups.items():
+            abbr = _FIPS_TO_STATE.get(int(fips))
+            if abbr is None:
+                continue
+            pct = float(dia_v.loc[group_idx].mean() * 100)
+            result[abbr] = round(pct, 1)
+
+        _cache["state_prevalence"] = result
+    return _cache["state_prevalence"]
+
+
 def load_references() -> list[dict]:
     """Load citation references from app/references.json, cached."""
     if "references" not in _cache:
