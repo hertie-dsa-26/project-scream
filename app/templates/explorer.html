@@ -8,7 +8,13 @@
 
 {% block mainclass %}wide{% endblock %}
 {% block content %}
-<h1>Data Explorer</h1>
+<div style="display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.5rem;">
+    <h1 style="margin-bottom: 0;">Data Explorer</h1>
+    <div id="highlight-toggle-wrap" style="display: none; align-items: center; gap: 0.6rem;">
+        <span style="font-size: 0.78rem; color: var(--muted);">Highlight my position</span>
+        <button id="highlight-toggle" class="unit-btn active" onclick="toggleHighlight()">On</button>
+    </div>
+</div>
 <p style="color: var(--muted); margin-top: 0.4rem; font-size: 0.9rem; margin-bottom: 2rem;">
     Explore patterns in the BRFSS 2024 dataset of 450,000+ American adults.
     Use the buttons on each chart to switch views.
@@ -60,6 +66,10 @@
 
 {% block scripts %}
 <script>
+var _chartData = {};    // store parsed chart data for toggle re-render
+var _origColors = {};   // store original single color per trace for toggle-off restore
+var _highlightOn = true;
+
 fetch("{{ url_for('explorer.explorer_data') }}")
     .then(function(res) {
         if (!res.ok) throw new Error("HTTP " + res.status);
@@ -74,17 +84,34 @@ fetch("{{ url_for('explorer.explorer_data') }}")
             return;
         }
 
+        // Show toggle only if user has prediction data
+        if (data.has_user_data) {
+            document.getElementById("highlight-toggle-wrap").style.display = "flex";
+        }
+
         var cfg = { responsive: true, displayModeBar: false };
 
-        [
-            ["chart1", data.chart1],
-            ["chart2", data.chart2],
-            ["chart3", data.chart3],
-            ["chart4", data.chart4],
-        ].forEach(function(pair) {
+        [["chart1", data.chart1], ["chart2", data.chart2],
+         ["chart3", data.chart3], ["chart4", data.chart4]].forEach(function(pair) {
             var id = pair[0], raw = pair[1];
             if (!raw) return;
             var parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+            _chartData[id] = parsed;
+            // Store original colors with amber highlights stripped out.
+            // Chart 3 has amber baked in server-side, so we find the base (non-amber)
+            // color and store a clean array with amber replaced by the base color.
+            _origColors[id] = parsed.data.map(function(trace) {
+                if (trace.type === "bar" && trace.marker && trace.marker.color) {
+                    var c = trace.marker.color;
+                    if (Array.isArray(c)) {
+                        var base = c.find(function(col) { return col !== "#f59e0b"; });
+                        if (!base) return c.slice();
+                        return c.map(function(col) { return col === "#f59e0b" ? base : col; });
+                    }
+                    return c;
+                }
+                return null;
+            });
             Plotly.newPlot(id, parsed.data, parsed.layout, cfg);
         });
     })
@@ -93,5 +120,49 @@ fetch("{{ url_for('explorer.explorer_data') }}")
         document.getElementById("explorer-error").style.display = "block";
         document.getElementById("explorer-error-detail").textContent = " — " + err.message;
     });
+
+function toggleHighlight() {
+    _highlightOn = !_highlightOn;
+    var btn = document.getElementById("highlight-toggle");
+    btn.textContent = _highlightOn ? "On" : "Off";
+    btn.classList.toggle("active", _highlightOn);
+
+    var cfg = { responsive: true, displayModeBar: false };
+    ["chart1", "chart2", "chart3", "chart4"].forEach(function(id) {
+        if (!_chartData[id]) return;
+
+        if (_highlightOn) {
+            // Restore full chart with highlights
+            Plotly.newPlot(id, _chartData[id].data, _chartData[id].layout, cfg);
+        } else {
+            // Remove shapes (vlines) and annotations (vline labels), restore original colors.
+            var cleanLayout = Object.assign({}, _chartData[id].layout, {
+                shapes: [],
+                annotations: [],
+            });
+            var cleanData = _chartData[id].data.map(function(trace, i) {
+                if (trace.type !== "bar" || !trace.marker) return trace;
+                var origColors = _origColors[id] && _origColors[id][i];
+                if (!origColors) return trace;
+                // Restore the original full color array
+                var restoredColors = Array.isArray(origColors) ? origColors.slice() : origColors;
+                // Only clear "You" text labels (amber-annotated bars on chart3).
+                // Preserve numeric bar labels (chart1).
+                var restoredText = trace.text;
+                if (Array.isArray(trace.text)) {
+                    var hasYou = trace.text.some(function(t) { return t === "You"; });
+                    if (hasYou) {
+                        restoredText = trace.text.map(function() { return ""; });
+                    }
+                }
+                return Object.assign({}, trace, {
+                    text: restoredText,
+                    marker: Object.assign({}, trace.marker, { color: restoredColors })
+                });
+            });
+            Plotly.newPlot(id, cleanData, cleanLayout, cfg);
+        }
+    });
+}
 </script>
 {% endblock %}
