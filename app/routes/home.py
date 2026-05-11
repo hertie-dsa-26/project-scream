@@ -10,6 +10,8 @@ import plotly.graph_objs as go
 import plotly
 import json
 
+from app.utils.data import get_state_prevalence
+
 home_bp = Blueprint("home", __name__)
 
 # US state abbreviations for the choropleth
@@ -21,33 +23,27 @@ _STATES = [
     "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC",
 ]
 
-# ---------------------------------------------------------------------------
-# BRFSS 2024 state-level diabetes prevalence (% of adults, age-adjusted).
-# Source: CDC BRFSS 2024 Prevalence & Trends Data.
-# TODO: replace with values computed from the loaded dataset in utils/data.py
-#       once the data layer is wired up in Phase 3.
-# ---------------------------------------------------------------------------
-_PREVALENCE = {
-    "AL": 13.9, "AK": 8.1,  "AZ": 10.6, "AR": 13.4, "CA": 9.8,
-    "CO": 7.6,  "CT": 9.0,  "DE": 11.0, "FL": 11.2, "GA": 12.3,
-    "HI": 10.3, "ID": 8.9,  "IL": 10.1, "IN": 12.0, "IA": 8.6,
-    "KS": 10.2, "KY": 13.5, "LA": 13.8, "ME": 9.5,  "MD": 10.2,
-    "MA": 8.4,  "MI": 11.2, "MN": 7.8,  "MS": 15.2, "MO": 11.6,
-    "MT": 8.2,  "NE": 9.1,  "NV": 10.5, "NH": 8.3,  "NJ": 9.8,
-    "NM": 11.0, "NY": 10.0, "NC": 11.5, "ND": 8.5,  "OH": 11.8,
-    "OK": 13.2, "OR": 8.7,  "PA": 10.9, "RI": 9.6,  "SC": 13.0,
-    "SD": 9.3,  "TN": 13.7, "TX": 11.8, "UT": 7.9,  "VT": 7.5,
-    "VA": 10.0, "WA": 8.5,  "WV": 15.0, "WI": 8.9,  "WY": 8.6,
-    "DC": 9.2,
-}
-
-
 def _build_map() -> str:
-    z_values   = [_PREVALENCE.get(s, 0) for s in _STATES]
+    prevalence = get_state_prevalence()
+
+    # For any state missing from the dataset, use 0 as a sentinel
+    # so it renders visibly different rather than silently wrong
+    z_values   = [prevalence.get(s, 0) for s in _STATES]
     hover_text = [
-        f"<b>{s}</b><br>{_PREVALENCE.get(s, 'N/A')}% diabetic"
+        f"<b>{s}</b><br>{prevalence.get(s, 'N/A')}% diabetic"
         for s in _STATES
     ]
+
+    # Set color scale using 5th-95th percentile to avoid outlier stretch
+    valid_z = sorted([z for z in z_values if z > 0])
+    if valid_z:
+        n = len(valid_z)
+        p5  = valid_z[max(0, int(n * 0.05))]
+        p95 = valid_z[min(n - 1, int(n * 0.95))]
+        zmin = round(p5  - 0.5, 1)
+        zmax = round(p95 + 0.5, 1)
+    else:
+        zmin, zmax = 5, 20
 
     fig = go.Figure(go.Choropleth(
         locations       = _STATES,
@@ -56,8 +52,8 @@ def _build_map() -> str:
         hoverinfo       = "text",
         locationmode    = "USA-states",
         colorscale      = "Blues",
-        zmin            = 5,
-        zmax            = 16,
+        zmin            = zmin,
+        zmax            = zmax,
         colorbar_title  = "% diabetic",
         marker_line_color = "white",
         marker_line_width = 0.5,
@@ -78,5 +74,6 @@ def _build_map() -> str:
 def home():
     return render_template(
         "home.html",
-        map_json = _build_map(),
+        map_json    = _build_map(),
+        states_json = json.dumps(_STATES),
     )

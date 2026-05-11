@@ -1,31 +1,13 @@
 /* story.css — layout styles specific to the scrollytelling home page only.
    All reusable component styles (forms, result boxes, cards) live in main.css. */
 
-.story-body { display: block; }
-
-/* ── Sticky header ── */
-.story-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.85rem 2.5rem;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
+/* story-body inherits the flex layout from main.css body rule.
+   .story-main fills the remaining space next to the sidebar. */
+.story-main {
+    flex: 1;
+    min-width: 0;
 }
 
-.story-header nav { display: flex; gap: 2rem; }
-
-.story-header nav a {
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 0.875rem;
-    transition: color 0.15s;
-}
-
-.story-header nav a:hover { color: var(--text); }
 
 /* ── Two-column scroll layout ── */
 .story-container {
@@ -41,8 +23,8 @@
 .story-graphic {
     width: 58%;
     position: sticky;
-    top: 3.5rem;
-    height: calc(100vh - 3.5rem);
+    top: 0;
+    height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -79,8 +61,9 @@
 }
 
 /* disclaimer at the bottom of the story */
-.story-text .disclaimer-note {
+.story-main .disclaimer-note {
     max-width: 38ch;
     margin-top: 4rem;
     padding-bottom: 4rem;
+    padding-left: 4rem;
 }

@@ -27,7 +27,8 @@
     <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
         These are factors within your control. Each card shows how your response
         compares to the average among diabetic and non-diabetic respondents in
-        the BRFSS 2024 dataset.
+        the BRFSS 2024 dataset. For multiple-choice questions, the benchmark
+        shows the most common answer and how often it was given.
     </p>
 
     {# What-if suggestions from model #}
@@ -78,7 +79,19 @@
                 {% for card in actionable_cards %}
                 <tr style="border-bottom: 1px solid var(--border);">
                     <td style="padding: 0.6rem 0.75rem; font-weight: 500;">
-                        {{ card.label }}
+                        <span style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                            {{ card.label }}
+                            {% if card.key == "smoking_status" %}
+                            <span class="tooltip-wrap">
+                                <button type="button" class="tooltip-btn" style="border-color: #854d0e; color: #854d0e;">!</button>
+                                <div class="tooltip-box" role="tooltip">
+                                    This result may not fully reflect the broader evidence.
+                                    Most studies associate smoking with higher diabetes risk.
+                                    Please consult a healthcare professional for personalised advice.
+                                </div>
+                            </span>
+                            {% endif %}
+                        </span>
                     </td>
                     <td style="padding: 0.6rem 0.75rem; text-align: center;">
                         {{ card.user_value }}
@@ -99,16 +112,55 @@
     <p class="disclaimer-note">{{ medical_disclaimer }}</p>
 </section>
 
-{# ── Section 2: Full model breakdown ── #}
+{# ── Section 2: CDC resources ── #}
+<section style="margin-bottom: 3rem;">
+    <h2 style="font-size: 1.1rem; font-weight: 500; margin-bottom: 0.35rem;">
+        Want to learn more or take action?
+    </h2>
+    <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
+        The CDC provides trusted, up-to-date resources on diabetes prevention and management.
+    </p>
+    <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+        <a href="https://www.cdc.gov/diabetes/living-with/index.html"
+           target="_blank" rel="noopener noreferrer"
+           style="display: flex; align-items: center; gap: 0.6rem; padding: 0.85rem 1rem;
+                  background: var(--surface); border: 1px solid var(--border);
+                  border-radius: 6px; text-decoration: none; color: var(--text);
+                  font-size: 0.875rem; transition: border-color 0.15s;">
+            <span style="color: var(--accent); font-size: 1rem;">↗</span>
+            <div>
+                <div style="font-weight: 500;">Living with diabetes</div>
+                <div style="color: var(--muted); font-size: 0.78rem;">
+                    cdc.gov — tips and tools for managing diabetes day-to-day
+                </div>
+            </div>
+        </a>
+        <a href="https://www.cdc.gov/diabetes/about/index.html"
+           target="_blank" rel="noopener noreferrer"
+           style="display: flex; align-items: center; gap: 0.6rem; padding: 0.85rem 1rem;
+                  background: var(--surface); border: 1px solid var(--border);
+                  border-radius: 6px; text-decoration: none; color: var(--text);
+                  font-size: 0.875rem; transition: border-color 0.15s;">
+            <span style="color: var(--accent); font-size: 1rem;">↗</span>
+            <div>
+                <div style="font-weight: 500;">About diabetes</div>
+                <div style="color: var(--muted); font-size: 0.78rem;">
+                    cdc.gov — causes, symptoms, risk factors and prevention
+                </div>
+            </div>
+        </a>
+    </div>
+</section>
+
+{# ── Section 3: Full model breakdown ── #}
 <section style="margin-bottom: 3rem;">
     <h2 style="font-size: 1.1rem; font-weight: 500; margin-bottom: 0.35rem;">
         How the model works
     </h2>
     <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
-        The chart below shows each feature's odds ratio from the logistic
-        regression model. An odds ratio above 1 means the feature is associated
-        with higher diabetes risk; below 1 means lower risk. Features are sorted
-        by their effect size.
+        The chart below shows each feature's weight from the SVM model.
+        A positive weight means the feature pushes toward higher diabetes risk;
+        a negative weight means lower risk. Features are sorted by absolute effect size.
     </p>
 
     <div id="coef-chart" style="width: 100%; height: 500px;"></div>
@@ -123,11 +175,8 @@
                                letter-spacing: 0.06em;">Feature</th>
                     <th style="text-align: right; padding: 0.5rem 0.75rem; color: var(--muted);
                                font-weight: 500; font-size: 0.72rem; text-transform: uppercase;
-                               letter-spacing: 0.06em;">Odds ratio</th>
+                               letter-spacing: 0.06em;">SVM weight</th>
                     <th style="text-align: right; padding: 0.5rem 0.75rem; color: var(--muted);
-                               font-weight: 500; font-size: 0.72rem; text-transform: uppercase;
-                               letter-spacing: 0.06em;">Coefficient</th>
-                    <th style="text-align: center; padding: 0.5rem 0.75rem; color: var(--muted);
                                font-weight: 500; font-size: 0.72rem; text-transform: uppercase;
                                letter-spacing: 0.06em;">Direction</th>
                 </tr>
@@ -138,11 +187,7 @@
                     <td style="padding: 0.5rem 0.75rem;">{{ row.display }}</td>
                     <td style="padding: 0.5rem 0.75rem; text-align: right;
                                font-family: 'DM Mono', monospace;">
-                        {{ "%.3f"|format(row.odds_ratio) }}
-                    </td>
-                    <td style="padding: 0.5rem 0.75rem; text-align: right;
-                               font-family: 'DM Mono', monospace;">
-                        {{ "%.3f"|format(row.coef) }}
+                        {{ "%.4f"|format(row.coef) }}
                     </td>
                     <td style="padding: 0.5rem 0.75rem; text-align: center;">
                         {% if row.direction == "risk" %}
@@ -162,7 +207,7 @@
     </div>
 </section>
 
-{# ── Section 3: Citations ── #}
+{# ── Section 4: Citations ── #}
 <section style="margin-bottom: 3rem;">
     <h2 style="font-size: 1.1rem; font-weight: 500; margin-bottom: 0.35rem;">
         Sources
@@ -197,9 +242,9 @@
 
 {% block scripts %}
 <script>
-// Odds ratio bar chart
-var features = {{ coef_rows | map(attribute='display') | list | tojson }};
-var oddsRatios = {{ coef_rows | map(attribute='odds_ratio') | list | tojson }};
+// SVM weight bar chart
+var features = {{ coef_rows | map(attribute='chart_label') | list | tojson }};
+var oddsRatios = {{ coef_rows | map(attribute='coef') | list | tojson }};
 var directions = {{ coef_rows | map(attribute='direction') | list | tojson }};
 
 var colors = directions.map(d => d === 'risk' ? '#fca5a5' : '#86efac');
@@ -214,12 +259,12 @@ var trace = {
         color: colors,
         line: { color: lineColors, width: 1 }
     },
-    hovertemplate: '<b>%{y}</b><br>Odds ratio: %{x:.3f}<extra></extra>',
+    hovertemplate: '<b>%{y}</b><br>SVM weight: %{x:.4f}<extra></extra>',
 };
 
 var layout = {
     xaxis: {
-        title: 'Odds ratio',
+        title: 'SVM weight',
         zeroline: false,
     },
     yaxis: {
@@ -228,13 +273,13 @@ var layout = {
     },
     shapes: [{
         type: 'line',
-        x0: 1, x1: 1,
+        x0: 0, x1: 0,
         y0: -0.5, y1: features.length - 0.5,
         line: { color: '#888', width: 1, dash: 'dot' }
     }],
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor:  'rgba(0,0,0,0)',
-    margin: { l: 0, r: 20, t: 10, b: 40 },
+    margin: { l: 180, r: 20, t: 10, b: 40 },
     font: { family: 'DM Sans' },
 };
 

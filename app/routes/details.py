@@ -15,12 +15,12 @@ from app.utils.data import (
     FEATURE_LABELS,
     CATEGORICAL_LABELS,
 )
-from app.utils.model import get_coefficients
+from app.utils.model import get_svm, get_feature_columns
 
 details_bp = Blueprint("details", __name__)
 
 # Which features get the prominent actionable treatment at the top
-_ACTIONABLE_KEYS = {"any_physical_activity", "smoking_status"}
+_ACTIONABLE_KEYS = {"any_physical_activity", "smoking_status", "any_alcohol_past_30d"}
 
 # Features where a lower value is better (for directional arrow logic)
 _LOWER_IS_BETTER = {"bmi_x100", "smoking_status", "general_health", "any_alcohol_past_30d"}
@@ -38,6 +38,22 @@ def _fmt_value(feature: str, value: float) -> str:
     return f"{value:.2f}"
 
 
+def _fmt_benchmark(feature: str, stats) -> str:
+    """Format a benchmark value for display in the comparison table."""
+    if stats is None:
+        return "N/A"
+    if isinstance(stats, dict):
+        if "pct_yes" in stats:
+            return f"Yes ({stats['pct_yes'] * 100:.0f}%)"
+        mode_val = stats.get("mode")
+        mode_pct = stats.get("mode_pct")
+        label = CATEGORICAL_LABELS.get(feature, {}).get(mode_val, str(mode_val))
+        if mode_pct is not None:
+            return f"{label} ({mode_pct * 100:.0f}%)"
+        return str(label)
+    return _fmt_value(feature, float(stats))
+
+
 @details_bp.route("/")
 def index():
     result = session.get("last_result")
@@ -48,7 +64,13 @@ def index():
 
     benchmarks   = get_benchmarks()
     overall      = get_overall_stats()
-    coefficients = get_coefficients()
+    svm      = get_svm()
+    features = get_feature_columns()
+    # Build weight rows from SVM weight vector (analogous to logit coefficients)
+    coefficients = [
+        {"feature": f, "coef": round(float(w), 4), "direction": "risk" if w > 0 else "protective"}
+        for f, w in sorted(zip(features, svm.w), key=lambda x: abs(x[1]), reverse=True)
+    ]
     references   = load_references()
 
     inputs = result["input_features"]
@@ -80,8 +102,8 @@ def index():
             "label":         FEATURE_LABELS.get(key, key),
             "user_value":    _fmt_value(key, user_val),
             "user_raw":      user_val,
-            "diabetic_avg":  _fmt_value(key, diabetic_avg) if diabetic_avg is not None else "N/A",
-            "nondiab_avg":   _fmt_value(key, nondiab_avg)  if nondiab_avg  is not None else "N/A",
+            "diabetic_avg":  _fmt_benchmark(key, diabetic_avg),
+            "nondiab_avg":   _fmt_benchmark(key, nondiab_avg),
         })
 
     # ── Full model feature rows ───────────────────────────────────────────
@@ -94,31 +116,37 @@ def index():
         except ValueError:
             return coef_name
 
-    # Build readable coefficient rows, one per coefficient entry
+    # Build readable weight rows from SVM weight vector.
+    # SVM weights are analogous to logit coefficients — positive = higher risk.
+    # Short clean labels for the chart
+    _CHART_LABELS = {
+        "sex":                   "Sex",
+        "any_physical_activity": "Physical activity",
+        "any_alcohol_past_30d":  "Alcohol (past 30 days)",
+        "smoking_status":        "Smoking status",
+        "general_health":        "General health",
+        "age_imputed":           "Age",
+        "bmi":                   "BMI",
+        "education_level":       "Education level",
+        "income_level":          "Income level",
+    }
+    # Longer notes for the table
+    _FEATURE_NOTES = {
+        "sex":                   "Sex (1=Male, 2=Female)",
+        "any_physical_activity": "Physical activity (1=Active, 2=Inactive)",
+        "any_alcohol_past_30d":  "Alcohol past 30 days (1=Yes, 2=No)",
+        "smoking_status":        "Smoking status (1=Daily, 2=Some days, 3=Former, 4=Never)",
+        "general_health":        "General health (1=Excellent → 5=Poor)",
+    }
     coef_rows = []
     for c in coefficients:
-        base   = _base_feature(c["feature"])
-        label  = FEATURE_LABELS.get(base, base.replace("_", " ").title())
-
-        # For one-hot encoded categoricals, show the level too
-        if base != c["feature"]:
-            raw_level = c["feature"].replace(base + "_", "")
-            try:
-                level_val = float(raw_level)
-                cat_label = CATEGORICAL_LABELS.get(base, {}).get(level_val, raw_level)
-                display   = f"{label} — {cat_label}"
-            except ValueError:
-                display = f"{label} — {raw_level}"
-        else:
-            display = label
-
+        feature = c["feature"]
         coef_rows.append({
-            "display":     display,
-            "feature":     base,
-            "coef":        round(c["coef"], 3),
-            "odds_ratio":  round(c["odds_ratio"], 3),
-            "p_value":     c["p_value"],
-            "direction":   "risk" if c["coef"] > 0 else "protective",
+            "display":     _FEATURE_NOTES.get(feature) or _CHART_LABELS.get(feature, feature.replace("_", " ").title()),
+            "chart_label": _CHART_LABELS.get(feature, feature.replace("_", " ").title()),
+            "feature":     feature,
+            "coef":        round(c["coef"], 4),
+            "direction":   c["direction"],
         })
 
     # ── Citations ─────────────────────────────────────────────────────────

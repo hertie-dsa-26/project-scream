@@ -11,12 +11,31 @@
         diabetes risk in seconds.
     </p>
 
+    {# ── Unit toggle ── #}
+    <div class="unit-toggle" style="margin-bottom: 1.5rem;">
+        <span style="font-size: 0.75rem; font-weight: 500; color: var(--muted);
+                     text-transform: uppercase; letter-spacing: 0.06em; margin-right: 0.75rem;">
+            Units
+        </span>
+        <button type="button" id="unit-metric" class="unit-btn active" onclick="setUnits('metric')">
+            Metric (cm / kg)
+        </button>
+        <button type="button" id="unit-imperial" class="unit-btn" onclick="setUnits('imperial')">
+            Imperial (ft·in / lbs)
+        </button>
+    </div>
+
     {# ── Form ── #}
-    <form class="predict-form" method="POST"
-          action="{{ url_for('predictions.predictions') }}">
+    <form class="predict-form" id="predict-form" method="POST"
+          action="{{ url_for('predictions.predictions') }}"
+          onsubmit="return convertAndSubmit(event)">
 
+        {# Hidden fields — always submitted in metric regardless of display unit #}
+        <input type="hidden" id="height_cm" name="height_cm">
+        <input type="hidden" id="weight_kg" name="weight_kg">
+
+        {# Age #}
         <div class="form-row">
-
             <div class="form-group {% if form_errors.age %}has-error{% endif %}">
                 <label for="age">Age</label>
                 <input type="number" id="age" name="age"
@@ -27,23 +46,68 @@
                 <span class="field-error">{{ form_errors.age }}</span>
                 {% endif %}
             </div>
-
-            <div class="form-group {% if form_errors.bmi %}has-error{% endif %}">
-                <label for="bmi">BMI</label>
-                <input type="number" id="bmi" name="bmi"
-                       min="10" max="70" step="0.1"
-                       value="{{ form_values.get('bmi', '') }}"
-                       placeholder="e.g. 27.5" required>
-                {% if form_errors.bmi %}
-                <span class="field-error">{{ form_errors.bmi }}</span>
-                {% endif %}
-            </div>
-
         </div>
 
+        {# Height — metric #}
+        <div id="height-metric" class="form-group {% if form_errors.height_cm %}has-error{% endif %}">
+            <label for="height-cm-input">Height (cm)</label>
+            <input type="number" id="height-cm-input"
+                   min="100" max="250" step="1"
+                   value="{{ form_values.get('height_cm', '') }}"
+                   placeholder="e.g. 175">
+            {% if form_errors.height_cm %}
+            <span class="field-error">{{ form_errors.height_cm }}</span>
+            {% endif %}
+        </div>
+
+        {# Height — imperial (ft + in) #}
+        <div id="height-imperial" class="form-group" style="display:none;">
+            <label>Height</label>
+            <div class="form-row" style="margin-top: 0;">
+                <div class="form-group">
+                    <input type="number" id="height-ft" min="3" max="8" step="1" placeholder="ft">
+                </div>
+                <div class="form-group">
+                    <input type="number" id="height-in" min="0" max="11" step="1" placeholder="in">
+                </div>
+            </div>
+        </div>
+
+        {# Weight — metric #}
+        <div id="weight-metric" class="form-group {% if form_errors.weight_kg %}has-error{% endif %}">
+            <label for="weight-kg-input">Weight (kg)</label>
+            <input type="number" id="weight-kg-input"
+                   min="30" max="300" step="0.1"
+                   value="{{ form_values.get('weight_kg', '') }}"
+                   placeholder="e.g. 75">
+            {% if form_errors.weight_kg %}
+            <span class="field-error">{{ form_errors.weight_kg }}</span>
+            {% endif %}
+        </div>
+
+        {# Weight — imperial (lbs) #}
+        <div id="weight-imperial" class="form-group" style="display:none;">
+            <label for="weight-lbs-input">Weight (lbs)</label>
+            <input type="number" id="weight-lbs-input"
+                   min="66" max="661" step="1" placeholder="e.g. 165">
+        </div>
+
+        {# Categorical fields #}
         {% for field, options in form_options.items() %}
         <div class="form-group {% if form_errors[field] %}has-error{% endif %}">
-            <label for="{{ field }}">{{ field | replace('_', ' ') | title }}</label>
+            <div class="label-row">
+                <label for="{{ field }}">
+                    {{ form_labels.get(field, field | replace('_', ' ') | title) }}
+                </label>
+                {% if form_tooltips.get(field) %}
+                <div class="tooltip-wrap">
+                    <button type="button" class="tooltip-btn" aria-label="More info">?</button>
+                    <div class="tooltip-box" role="tooltip">
+                        {{ form_tooltips[field] }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
             <select id="{{ field }}" name="{{ field }}" required>
                 <option value="">Select…</option>
                 {% for val, label in options %}
@@ -63,11 +127,14 @@
 
     </form>
 
+    <form method="POST" action="{{ url_for('predictions.clear') }}" style="margin-top: 0.75rem;">
+        <button type="submit" class="btn-clear">Clear form</button>
+    </form>
+
     {# ── Result ── #}
     {% if result is not none %}
     <div class="risk-result">
 
-        {# Big coloured banner — the main result at a glance #}
         <div class="risk-category-banner {{ result.risk_category }}">
             <div>
                 <div class="risk-category-label">Estimated risk category</div>
@@ -83,7 +150,6 @@
 
         <p class="disclaimer-note">{{ medical_disclaimer }}</p>
 
-        {# ── Actionable suggestions ── #}
         {% if result.suggestions %}
         <div class="wakeup-section">
             <h3>What you can change</h3>
@@ -111,4 +177,112 @@
     {% endif %}
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setUnits(unit) {
+    var isMetric = unit === 'metric';
+    document.getElementById('height-metric').style.display   = isMetric ? '' : 'none';
+    document.getElementById('weight-metric').style.display   = isMetric ? '' : 'none';
+    document.getElementById('height-imperial').style.display = isMetric ? 'none' : '';
+    document.getElementById('weight-imperial').style.display = isMetric ? 'none' : '';
+    document.getElementById('unit-metric').classList.toggle('active', isMetric);
+    document.getElementById('unit-imperial').classList.toggle('active', !isMetric);
+    localStorage.setItem('scream-units', unit);
+}
+
+// Restore last-used unit preference on page load,
+// and convert saved metric values back to imperial display if needed.
+(function() {
+    var saved = localStorage.getItem('scream-units') || 'metric';
+    setUnits(saved);
+
+    if (saved === 'imperial') {
+        // Convert saved metric height_cm back to ft + in for display
+        var hCm = parseFloat(document.getElementById('height-cm-input').value);
+        if (!isNaN(hCm)) {
+            var totalIn = hCm / 2.54;
+            var ft = Math.floor(totalIn / 12);
+            var ins = Math.round(totalIn % 12);
+            document.getElementById('height-ft').value = ft;
+            document.getElementById('height-in').value = ins;
+        }
+        // Convert saved metric weight_kg back to lbs for display
+        var wKg = parseFloat(document.getElementById('weight-kg-input').value);
+        if (!isNaN(wKg)) {
+            document.getElementById('weight-lbs-input').value = Math.round(wKg / 0.453592);
+        }
+    }
+})();
+
+function convertAndSubmit(e) {
+    var isMetric = document.getElementById('unit-metric').classList.contains('active');
+
+    if (isMetric) {
+        var hVal = parseFloat(document.getElementById('height-cm-input').value);
+        var wVal = parseFloat(document.getElementById('weight-kg-input').value);
+
+        if (isNaN(hVal) || hVal < 100 || hVal > 250) {
+            alert('Please enter a valid height between 100 and 250 cm.');
+            e.preventDefault(); return false;
+        }
+        if (isNaN(wVal) || wVal < 30 || wVal > 300) {
+            alert('Please enter a valid weight between 30 and 300 kg.');
+            e.preventDefault(); return false;
+        }
+        document.getElementById('height_cm').value = hVal.toFixed(1);
+        document.getElementById('weight_kg').value  = wVal.toFixed(1);
+
+    } else {
+        var ft  = parseFloat(document.getElementById('height-ft').value) || 0;
+        var ins = parseFloat(document.getElementById('height-in').value) || 0;
+        var lbs = parseFloat(document.getElementById('weight-lbs-input').value);
+
+        var totalInches = ft * 12 + ins;
+        var heightCm    = totalInches * 2.54;
+        var weightKg    = lbs * 0.453592;
+
+        if (isNaN(lbs) || (ft === 0 && ins === 0)) {
+            alert('Please enter your height and weight.');
+            e.preventDefault(); return false;
+        }
+        if (heightCm < 100 || heightCm > 250) {
+            alert('Height must be between 3ft 3in and 8ft 2in.');
+            e.preventDefault(); return false;
+        }
+        if (weightKg < 30 || weightKg > 300) {
+            alert('Weight must be between 66 and 661 lbs.');
+            e.preventDefault(); return false;
+        }
+        document.getElementById('height_cm').value = heightCm.toFixed(1);
+        document.getElementById('weight_kg').value  = weightKg.toFixed(1);
+    }
+    return true;
+}
+</script>
+
+<style>
+.unit-toggle { display: flex; align-items: center; }
+
+.unit-btn {
+    padding: 0.35rem 0.85rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.unit-btn:first-of-type { border-radius: 4px 0 0 4px; }
+.unit-btn:last-of-type  { border-radius: 0 4px 4px 0; border-left: none; }
+
+.unit-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+</style>
 {% endblock %}

@@ -7,16 +7,17 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/story.css') }}">
     {% block head %}{% endblock %}
 </head>
-<body class="story-body">
-    <header class="story-header">
+<body>
+    <aside>
         <a href="{{ url_for('home.home') }}" class="nav-brand">SCREAM</a>
-        <nav>
-            <a href="{{ url_for('predictions.predictions') }}">Predictions</a>
-            <a href="{{ url_for('explorer.explorer') }}">Explorer</a>
-            <a href="{{ url_for('details.index') }}">Details</a>
-        </nav>
-    </header>
-    {% block content %}{% endblock %}
+        <a href="{{ url_for('home.home') }}">Home</a>
+        <a href="{{ url_for('predictions.predictions') }}">Predictions</a>
+        <a href="{{ url_for('explorer.explorer') }}">Explorer</a>
+        <a href="{{ url_for('details.index') }}">Details</a>
+    </aside>
+    <div class="story-main">
+        {% block content %}{% endblock %}
+    </div>
     {% block scripts %}{% endblock %}
 </body>
 </html>

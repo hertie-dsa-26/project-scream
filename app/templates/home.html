@@ -36,6 +36,9 @@
                 <p>BMI, physical activity, smoking, and age are among the
                 strongest predictors. The picture shifts when we look at
                 who is most at risk — not just where they live.</p>
+                <a class="cta" href="{{ url_for('explorer.explorer') }}">
+                    Explore the data →
+                </a>
             </div>
         </div>
 
@@ -70,6 +73,33 @@
         displayModeBar: false
     });
 
+    // Southern belt states for zoom + border highlight
+    var SOUTHERN_BELT = [
+        'AL', 'MS', 'LA', 'AR', 'GA', 'SC', 'NC', 'WV', 'KY', 'OK', 'TX', 'FL'
+        // TN (FIPS 47) is absent from the BRFSS subset and shows no data
+    ];
+
+    // All states in the choropleth (must match order in home.py _STATES list)
+    var ALL_STATES = {{ states_json | safe }};
+
+    // Build per-state line widths and colors for southern belt highlight
+    function southernBeltMarker() {
+        var lineColors = ALL_STATES.map(function(s) {
+            return SOUTHERN_BELT.indexOf(s) >= 0 ? '#1e3a5f' : 'white';
+        });
+        var lineWidths = ALL_STATES.map(function(s) {
+            return SOUTHERN_BELT.indexOf(s) >= 0 ? 2.0 : 0.5;
+        });
+        return { color: lineColors, width: lineWidths };
+    }
+
+    function defaultMarker() {
+        return {
+            color: ALL_STATES.map(function() { return 'white'; }),
+            width: ALL_STATES.map(function() { return 0.5; })
+        };
+    }
+
     const stepUpdates = [
         { title: 'Diabetes prevalence by state — BRFSS 2024' },
         { title: 'Focus: the Southern Belt' },
@@ -77,13 +107,84 @@
         { title: 'Who is most at risk?' },
     ];
 
+    // Smoothly animate geo center and scale between two states.
+    // from/to: { lon, lat, scale }
+    // duration: ms, onComplete: callback fired when done
+    var _geoAnimFrame = null;
+    var _prevStep = 0;  // track previous step to know if we need to zoom out
+    function animateGeo(from, to, duration, onComplete) {
+        if (_geoAnimFrame) cancelAnimationFrame(_geoAnimFrame);
+        var start = null;
+
+        // Ease in-out cubic
+        function ease(t) {
+            return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+        }
+
+        function step(ts) {
+            if (!start) start = ts;
+            var elapsed = ts - start;
+            var t = Math.min(elapsed / duration, 1);
+            var e = ease(t);
+
+            var lon   = from.lon   + (to.lon   - from.lon)   * e;
+            var lat   = from.lat   + (to.lat   - from.lat)   * e;
+            var scale = from.scale + (to.scale - from.scale) * e;
+
+            Plotly.relayout('story-map', {
+                'geo.center':           { lon: lon, lat: lat },
+                'geo.projection.scale': scale,
+            });
+
+            if (t < 1) {
+                _geoAnimFrame = requestAnimationFrame(step);
+            } else {
+                _geoAnimFrame = null;
+                if (onComplete) onComplete();
+            }
+        }
+
+        _geoAnimFrame = requestAnimationFrame(step);
+    }
+
     const scroller = scrollama();
     scroller
         .setup({ step: '.step', offset: 0.5 })
         .onStepEnter(({ element, index }) => {
             document.querySelectorAll('.step').forEach(s => s.classList.remove('is-active'));
             element.classList.add('is-active');
-            Plotly.relayout('story-map', { 'title.text': stepUpdates[index].title });
+
+            if (index === 1) {
+                animateGeo(
+                    { lon: -96, lat: 38, scale: 1 },
+                    { lon: -88, lat: 32, scale: 3 },
+                    600,
+                    function() {
+                        Plotly.restyle('story-map', {
+                            'marker.line.color': [southernBeltMarker().color],
+                            'marker.line.width': [southernBeltMarker().width],
+                        }, [0]);
+                    }
+                );
+                Plotly.relayout('story-map', { 'title.text': stepUpdates[index].title });
+            } else {
+                // Only animate zoom-out if we're actually coming from the southern belt step
+                if (_prevStep === 1) {
+                    animateGeo(
+                        { lon: -88, lat: 32, scale: 3 },
+                        { lon: -96, lat: 38, scale: 1 },
+                        600,
+                        function() {
+                            Plotly.restyle('story-map', {
+                                'marker.line.color': [defaultMarker().color],
+                                'marker.line.width': [defaultMarker().width],
+                            }, [0]);
+                        }
+                    );
+                }
+                Plotly.relayout('story-map', { 'title.text': stepUpdates[index].title });
+            }
+            _prevStep = index;
         });
 
     window.addEventListener('resize', scroller.resize);

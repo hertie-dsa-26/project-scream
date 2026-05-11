@@ -66,10 +66,13 @@ def test_benchmarks_has_diabetic_and_non_diabetic_keys(app_context):
 
 
 @requires_data
-def test_benchmarks_diabetic_values_are_floats(app_context):
+def test_benchmarks_diabetic_values_are_correct_types(app_context):
+    """Numeric features return float, categorical features return dict."""
     result = get_benchmarks()
     for val in result["diabetic"].values():
-        assert isinstance(val, float)
+        assert isinstance(val, (float, dict)), f"Unexpected type: {type(val)}"
+        if isinstance(val, dict):
+            assert "mode" in val and "mode_pct" in val
 
 
 @requires_data

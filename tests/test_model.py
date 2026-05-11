@@ -15,21 +15,21 @@ from app.utils.model import load_model, predict, PredictResult
 
 @pytest.fixture(scope="module", autouse=True)
 def loaded_model():
-    """Load model artifacts once for the whole module."""
+    """Load SVM artifacts once for the whole module."""
     load_model()
 
 
 def _valid_inputs(**overrides) -> dict:
     """Return a valid cleaned input dict as produced by validation.py."""
     base = {
-        "age_imputed":           45.0,
-        "bmi_x100":              2750.0,
-        "sex":                   1.0,
         "general_health":        3.0,
+        "any_physical_activity": 1.0,
+        "sex":                   1.0,
+        "age_imputed":           45.0,
+        "bmi":                   27.5,   # raw BMI, not bmi_x100
         "education_level":       4.0,
         "income_level":          5.0,
         "smoking_status":        4.0,
-        "any_physical_activity": 1.0,
         "any_alcohol_past_30d":  1.0,
     }
     base.update(overrides)
@@ -96,7 +96,7 @@ def test_input_features_contains_user_inputs():
 def test_low_risk_category():
     """Young, healthy profile should tend toward low risk."""
     result = predict(_valid_inputs(
-        age_imputed=25.0, bmi_x100=2200.0,
+        age_imputed=25.0, bmi=20.0,
         general_health=1.0, any_physical_activity=1.0,
         smoking_status=4.0, income_level=7.0,
     ))
@@ -106,7 +106,7 @@ def test_low_risk_category():
 def test_high_risk_category():
     """Older, high-risk profile should tend toward high risk."""
     result = predict(_valid_inputs(
-        age_imputed=75.0, bmi_x100=4000.0,
+        age_imputed=75.0, bmi=40.0,
         general_health=5.0, any_physical_activity=2.0,
         smoking_status=1.0, income_level=1.0,
     ))
@@ -129,18 +129,19 @@ def test_active_user_gets_no_activity_suggestion():
     assert not any("activ" in l.lower() for l in labels)
 
 
-def test_smoker_gets_quit_suggestion_if_delta_meaningful():
+def test_smoker_always_gets_quit_suggestion():
     """
-    Quit smoking suggestion only fires if the counterfactual delta exceeds 0.5pp.
-    We test that the suggestion either appears (with a positive delta) or is
-    correctly suppressed — not that it always appears.
+    Quit smoking suggestion must always appear for current smokers (codes 1 and 2).
+    It is treated as static (no delta shown) since the model signal is unreliable
+    for this feature — but it must still appear in the suggestions list.
     """
-    result = predict(_valid_inputs(smoking_status=1.0))
-    non_static = [s for s in result.suggestions if not s.get("static")]
-    smoking_suggestions = [s for s in non_static if "smok" in s["label"].lower()]
-    # If it appears, the delta must be positive
-    for s in smoking_suggestions:
-        assert s["delta_pct"] > 0
+    for code in [1.0, 2.0]:
+        result = predict(_valid_inputs(smoking_status=code))
+        # Check all suggestions including static ones
+        labels = [s["label"].lower() for s in result.suggestions]
+        assert any("smok" in l for l in labels), (
+            f"Expected quit-smoking suggestion for smoking_status={code}, got: {labels}"
+        )
 
 
 def test_suggestion_delta_is_positive():
@@ -164,12 +165,12 @@ def test_boundary_age_max():
 
 
 def test_boundary_bmi_min():
-    result = predict(_valid_inputs(bmi_x100=1000.0))
+    result = predict(_valid_inputs(bmi=10.0))
     assert isinstance(result, PredictResult)
 
 
 def test_boundary_bmi_max():
-    result = predict(_valid_inputs(bmi_x100=7000.0))
+    result = predict(_valid_inputs(bmi=70.0))
     assert isinstance(result, PredictResult)
 
 

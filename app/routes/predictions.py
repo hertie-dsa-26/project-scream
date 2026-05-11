@@ -58,6 +58,44 @@ FORM_OPTIONS = {
     ],
 }
 
+# Human-readable labels for fields whose auto-formatted key names are unclear.
+# predictions.html uses this instead of the default key -> title formatting.
+FORM_LABELS = {
+    "sex":                   "Sex",
+    "general_health":        "General health",
+    "education_level":       "Education level",
+    "income_level":          "Income level",
+    "smoking_status":        "Smoking status",
+    "any_physical_activity": "Any physical activity in the past month?",
+    "any_alcohol_past_30d":  "Any alcohol in the past 30 days?",
+}
+
+# Tooltip text shown next to the label for fields that need extra explanation.
+FORM_TOOLTIPS = {
+    "general_health": (
+        "Rate your overall health: Excellent means no limitations or health issues; "
+        "Very good means minor issues; Good means some ongoing conditions; "
+        "Fair means significant health problems affecting daily life; "
+        "Poor means severe or disabling health conditions."
+    ),
+    "education_level": (
+        "Select the highest level of education you have completed. "
+        "Grade 12 / GED or higher includes any college or postgraduate education."
+    ),
+    "income_level": (
+        "Select your total annual household income before taxes, "
+        "including all sources for everyone living in your home."
+    ),
+    "any_physical_activity": (
+        "Any leisure-time physical activity counts — walking, sports, gym, gardening, "
+        "or any other exercise done in the past 30 days outside of your regular job."
+    ),
+    "any_alcohol_past_30d": (
+        "Any drink counts — beer, wine, spirits, or any other alcoholic beverage "
+        "consumed at least once in the past 30 days."
+    ),
+}
+
 
 @predictions_bp.route("/", methods=["GET", "POST"])
 def predictions():
@@ -70,18 +108,47 @@ def predictions():
         if not form_errors:
             result = predict(cleaned)
 
-            # Store in session so /details can access without re-running model
+            # Persist form values and result in session so:
+            # - /details can access the result without re-running the model
+            # - the form repopulates when the user navigates back
             session["last_result"] = {
                 "probability_pct": result.probability_pct,
                 "risk_category":   result.risk_category,
                 "suggestions":     result.suggestions,
                 "input_features":  result.input_features,
             }
+            session["last_form_values"] = dict(request.form)
+
+    # On GET, restore saved form values if present; on POST use request.form
+    form_values = request.form if request.method == "POST" else session.get("last_form_values", {})
+
+    # Restore last result on GET so the result panel repopulates on back-navigation
+    if request.method == "GET" and "last_result" in session:
+        from app.utils.model import PredictResult
+        saved = session["last_result"]
+        result = PredictResult(
+            probability      = saved["probability_pct"] / 100,
+            probability_pct  = saved["probability_pct"],
+            risk_category    = saved["risk_category"],
+            suggestions      = saved["suggestions"],
+            input_features   = saved["input_features"],
+        )
 
     return render_template(
         "predictions.html",
-        form_options  = FORM_OPTIONS,
-        form_values   = request.form,
-        form_errors   = form_errors,
-        result        = result,
+        form_options   = FORM_OPTIONS,
+        form_labels    = FORM_LABELS,
+        form_tooltips  = FORM_TOOLTIPS,
+        form_values    = form_values,
+        form_errors    = form_errors,
+        result         = result,
     )
+
+
+@predictions_bp.route("/clear", methods=["POST"])
+def clear():
+    """Wipe saved form values and last result from session, return to empty form."""
+    session.pop("last_form_values", None)
+    session.pop("last_result", None)
+    from flask import redirect, url_for
+    return redirect(url_for("predictions.predictions"))
