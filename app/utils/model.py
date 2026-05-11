@@ -268,7 +268,9 @@ def predict(validated_inputs: dict) -> PredictResult:
                     "tip":          action["tip"],
                     "new_prob_pct": round(new_score * 100, 1),
                     "delta_pct":    round(delta_pct, 1),
-                    "static":       False,
+                    # always_show actions (smoking) are treated as static —
+                    # the model signal is not reliable enough to display numbers
+                    "static":       action.get("always_show", False),
                 })
 
     suggestions.append(_DIET_TIP)
