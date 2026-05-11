@@ -131,14 +131,14 @@ def test_active_user_gets_no_activity_suggestion():
 
 def test_smoker_always_gets_quit_suggestion():
     """
-    Quit smoking suggestion must always appear for current smokers (codes 1 and 2),
-    regardless of the model's counterfactual delta. Evidence for smoking -> diabetes
-    risk is clear in the literature and should not be suppressed by a small model effect.
+    Quit smoking suggestion must always appear for current smokers (codes 1 and 2).
+    It is treated as static (no delta shown) since the model signal is unreliable
+    for this feature — but it must still appear in the suggestions list.
     """
     for code in [1.0, 2.0]:
         result = predict(_valid_inputs(smoking_status=code))
-        non_static = [s for s in result.suggestions if not s.get("static")]
-        labels = [s["label"].lower() for s in non_static]
+        # Check all suggestions including static ones
+        labels = [s["label"].lower() for s in result.suggestions]
         assert any("smok" in l for l in labels), (
             f"Expected quit-smoking suggestion for smoking_status={code}, got: {labels}"
         )
