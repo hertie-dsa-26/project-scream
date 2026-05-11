@@ -6,9 +6,13 @@
 
 SCREAM is an interactive web application that uses machine learning to estimate an individual's risk of developing diabetes based on behavioral, demographic, and health factors. Our predictive models are powered by the 2024 Behavioral Risk Factor Surveillance System (BRFSS) dataset from the CDC.
 
+For full technical documentation — architecture, model details, key files, and notes for graders — see [`DOCS.md`](DOCS.md).
+
+---
+
 ## Setup & Installation
 
-**Prerequisites:** 
+**Prerequisites:**
 - Python 3.14+
 - [uv](https://github.com/astral-sh/uv) (our chosen Python package manager)
 
@@ -19,56 +23,82 @@ cd project-scream
 uv sync
 ```
 
-**2. Data Requirements:**
-To train the model, run predictions, or view the Explorer, you must have the dataset subset locally.
-* Place the `brfss2024_subset.parquet` file inside `data/subsets/`.
-
-**3. Generate Model Artifacts:**
-Because the model artifacts are not stored in version control, you must generate them locally before starting the app:
-```bash
-uv run python train_model.py
+**2. Data requirements:**
+The BRFSS parquet is not committed to the repository (too large). Place it at:
 ```
-*(This will generate `pipeline.joblib`, `metrics.json`, and `coefficients.json` in `app/model/artifacts/`)*
-
-**4. Run the Flask App:**
-Start the development server:
-```bash
-uv run flask --app run.py run --debug
+data/subsets/brfss2024_subset.parquet
 ```
-The app will now be accessible at `http://127.0.0.1:5000/`.
-
-**5. Running Tests (Optional):**
-To execute the robust test suite (data models, validation factors), run:
-```bash
-uv run pytest tests/ -v
-```
-
-## Features
-
-- **Personalized Risk Prediction:** Users submit health factors via an intuitive UI to receive a tailored diabetes risk probability and categorization.
-- **Actionable Health Suggestions:** Provides dynamic counterfactual recommendations (e.g., stopping smoking, improving physical activity) indicating exactly how lifestyle adjustments can lower the user's personal risk score.
-- **Data Explorer:** An interactive dashboard exploring relationships between demographic/lifestyle factors and diabetes prevalence across the U.S.
-
-## Data & Methodology
-
-The model is trained on a ~400,000-response dataset from the **2024 BRFSS**, using approximately 75 variables filtering for demographics, general health, chronic conditions, lifestyle, and social determinants. We trained a **Support Vector Machine (SVM)** pipeline integrated tightly with a Flask backend.
-
-**Download the raw dataset:**
+Download links:
 - [Official CDC Website](https://www.cdc.gov/brfss/annual_data/annual_2024.html)
 - [Google Drive Mirror](https://drive.google.com/file/d/1rp-CuzP-wnhk3gEbNib1MZ5ci_r8etMw/view?usp=sharing)
 
-*(Note: Data dictionaries mapping BRFSS codebooks to pipeline features were utilized internally during the EDA phase.)*
+The parquet is required for the home page map and explorer charts. Predictions will work without it since the model artifacts are pre-trained and committed.
 
-## Architecture & Code Structure
+**3. Run the app:**
+```bash
+uv run flask --app run.py run --debug
+```
+The app will be available at `http://127.0.0.1:5000`.
 
-The application follows a highly modular structure with clear separation of concerns:
-- **`app/routes/`**: Handles the web endpoints, rendering views, and coordinating application logic.
-- **`app/utils/`**: Core logic including robust input validation (`validation.py`), model ingestion (`model.py`), and data processing.
-- **`app/model/artifacts/`**: Stores the locally generated machine learning pipeline models.
-- **`tests/`**: A robust Pytest suite combined with GitHub Actions CI ensuring quality check coverage against regressions, validations, and bounds limits.
-- **`pipeline/`**: Contains scripts for sub-setting and processing raw BRFSS data.
+**4. Run the tests:**
+```bash
+uv run pytest tests/ -v
+```
+Tests that require the BRFSS parquet are skipped automatically if the file is not present.
 
-## Literature & Credibility
+**5. Retraining the model (if needed):**
+The trained SVM artifacts are committed to `app/model/artifacts/` and do not need to be regenerated unless you change the training data or sklearn version. If you do need to retrain:
+```bash
+uv run python retrain_svm.py
+```
+
+---
+
+## Features
+
+- **Personalised risk prediction:** Users submit health factors via an intuitive form — including height and weight (metric or imperial), age, lifestyle and socioeconomic indicators — to receive a tailored diabetes risk score and category (low / moderate / high).
+- **Actionable health suggestions:** Dynamic recommendations based on counterfactual modelling — e.g. how switching from inactive to active would shift the user's estimated score.
+- **Data explorer:** An interactive dashboard exploring relationships between demographic and lifestyle factors and diabetes prevalence across the U.S., with the user's position highlighted on each chart based on their last prediction.
+- **Scrollytelling home page:** A narrative map-driven landing page showing state-level diabetes prevalence computed directly from the BRFSS dataset, with animated zoom to the southern belt.
+- **Detailed breakdown:** Feature weight visualisation, population benchmarks, CDC resources, and full literature citations on the details page.
+
+---
+
+## Data & Methodology
+
+The model is trained on a subset of ~450,000 responses from the **2024 BRFSS**, using 9 features covering demographics, lifestyle, and general health.
+
+**Model:** A from-scratch linear SVM (`ManualSVM`) implemented in `app/utils/model.py` using SGD with hinge loss. This satisfies the course requirement for a custom algorithm implementation. Risk scoring uses sigmoid(decision score) since the SVM has no `predict_proba`. The model achieves ROC-AUC ~0.78 on the held-out test set.
+
+**Features used:**
+- General health self-rating
+- Physical activity (past 30 days)
+- Sex
+- Age
+- BMI (computed from height and weight)
+- Education level
+- Income level
+- Smoking status
+- Alcohol use (past 30 days)
+
+---
+
+## Architecture
+
+The application follows a modular structure with strict separation of concerns:
+
+- **`app/routes/`** — HTTP endpoints only; no business logic
+- **`app/utils/`** — core logic: input validation, model inference, data aggregation
+- **`app/model/artifacts/`** — pre-trained SVM, scaler, and feature columns
+- **`app/templates/`** — Jinja2 templates with Plotly.js for interactive charts
+- **`tests/`** — 75 pytest tests with GitHub Actions CI
+- **`pipeline/`** — scripts for subsetting and processing raw BRFSS data
+
+See [`DOCS.md`](DOCS.md) for a full directory tree, request flow walkthrough, and key file reference.
+
+---
+
+## Literature
 
 Machine learning approaches applied to diabetes prediction using demographic and lifestyle features have been extensively studied. The following research informed our methodology:
 
@@ -81,9 +111,12 @@ Machine learning approaches applied to diabetes prediction using demographic and
 7. *Diabetes prediction research.* PubMed Central, PMC10107388. [Link](https://pmc.ncbi.nlm.nih.gov/articles/PMC10107388/)
 8. *Diabetes prediction research.* BMJ Open, e096595. [Link](https://bmjopen.bmj.com/content/15/3/e096595)
 
+---
+
 ## Meet the Team
 
 This project was built collaboratively by Team SCREAM:
+
 - **Adarsh Tripathi**
 - **David Colín**
 - **Jesper Boon**
