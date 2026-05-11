@@ -192,10 +192,28 @@ function setUnits(unit) {
     localStorage.setItem('scream-units', unit);
 }
 
-// Restore last-used unit preference on page load
+// Restore last-used unit preference on page load,
+// and convert saved metric values back to imperial display if needed.
 (function() {
     var saved = localStorage.getItem('scream-units') || 'metric';
     setUnits(saved);
+
+    if (saved === 'imperial') {
+        // Convert saved metric height_cm back to ft + in for display
+        var hCm = parseFloat(document.getElementById('height-cm-input').value);
+        if (!isNaN(hCm)) {
+            var totalIn = hCm / 2.54;
+            var ft = Math.floor(totalIn / 12);
+            var ins = Math.round(totalIn % 12);
+            document.getElementById('height-ft').value = ft;
+            document.getElementById('height-in').value = ins;
+        }
+        // Convert saved metric weight_kg back to lbs for display
+        var wKg = parseFloat(document.getElementById('weight-kg-input').value);
+        if (!isNaN(wKg)) {
+            document.getElementById('weight-lbs-input').value = Math.round(wKg / 0.453592);
+        }
+    }
 })();
 
 function convertAndSubmit(e) {
