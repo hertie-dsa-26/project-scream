@@ -195,3 +195,13 @@ The medical disclaimer is injected into every template automatically via a `cont
 - The ManualSVM is implemented from scratch in `app/utils/model.py`. The class definition must live there (not in `retrain_svm.py`) so that joblib can deserialise the saved pickle correctly when the app loads.
 - Input validation is strict because the StandardScaler and SVM were trained on a specific feature set. Submitting out-of-range or unknown values would produce silently wrong predictions rather than errors, so the validator catches them before they reach the model.
 - Tennessee (FIPS 47) is absent from the BRFSS subset used by this project and appears as a gap on the home page map. This is a data collection issue, not a bug.
+
+#### Additionally on code quality:
+
+This project followed a clean and disciplined Git workflow:
+
+- All work was done on feature branches, never directly on main.
+- Every Pull Request was reviewed by at least one other team member before merging.
+- The main branch remained protected and stable at all times.
+- Workflow and coding standards followed the repo’s [Contributing Guidelines](Contributing_Regulations.md), ensuring consistent GitHub hygiene and collaborative best practices.
+
