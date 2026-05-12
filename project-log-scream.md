@@ -123,7 +123,7 @@ Marci also attending Prof. Dimmery's office hours.
 - PR #42 (feat/ml-integration) merged by Marci.
 - PR #44 (tests) merged by Marci.
 - Survey respondent count corrected in `home.html`.
-- Luis attended Prof. Dimmery's office hours to gather feedback to the app and input for the presentation
+- Luis and Adarsh attended Prof. Dimmery's office hours to gather feedback to the app and input for the presentation
 - Extensive internal feedback session to features and flask app
 
 
