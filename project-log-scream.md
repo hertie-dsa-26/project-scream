@@ -127,7 +127,7 @@ Marci also attending Prof. Dimmery's office hours.
 - Extensive internal feedback session to features and flask app
 
 
-**May 9:** Team spins up temporary Cloudflare tunnel to demo the live app to the team. Team member reviews it on mobile - no issues, slight load time on the explorer page noted (acceptable given it queries the Parquet directly; team decides not to refactor the dataloader at this stage).
+**May 9:** Adarsh sets up temporary Cloudflare tunnel to demo the live app to the team. Team member reviews it on mobile - no issues, slight load time on the explorer page noted (acceptable given it queries the Parquet directly; team decides not to refactor the dataloader at this stage).
 
 **May 10 — PR #50 opened (Final Refinements), by Marci:**
  
