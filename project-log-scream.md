@@ -178,10 +178,4 @@ Marci also shares `CLEANUP.md`, `DOCS.md`, and `TODO.md` with the team.
 
 ---
 
-## Still To Do
-
-- [ ] 
-
----
-
 *Last updated: May 13, 2026*
