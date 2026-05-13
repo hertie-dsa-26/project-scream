@@ -6,15 +6,15 @@ A running record of what the team has built and when. Updated as the project pro
 
 ## Team Members
 
-| GitHub Handle | Name | Role |
-|---|---|---|
-| `luiscza` | Luis | Visualization/Prototyping, Documentation |
-| `adarsht27` | Adarsh | Scrum Master, Version Control & Workflow |
-| `YenusAyalew` | Yenus | Visualization/Prototyping, EDA |
-| `JesperBoon` | Jesper | Flask Development, Task Coordination |
-| `mateism` | Marci | Flask Development |
-| `KJ-7` | Kevine | EDA |
-| `davraco9-lab` | David | EDA |
+| GitHub Handle | Name |
+|---|---|
+| `luiscza` | Luis |
+| `adarsht27` | Adarsh | 
+| `YenusAyalew` | Yenus | 
+| `JesperBoon` | Jesper | 
+| `mateism` | Marci | 
+| `KJ-7` | Kevine | 
+| `davraco9-lab` | David | 
 
 ---
 
@@ -22,7 +22,7 @@ A running record of what the team has built and when. Updated as the project pro
 
 **Feb 11:** Marci creates the team group chat ("SCREAM"). Team begins scheduling their first sprint/scrum meeting.
 
-**Feb 12 — First Scrum Meeting** (Room 3.33, hybrid): Kevine assigns first tasks — everyone reviews the project rubric, explores datasets, and prepares a dataset pitch for the next meeting.
+**Feb 12 — First Scrum Meeting** (hybrid): Kevine assigns first tasks — everyone reviews the project rubric, explores datasets, and prepares a dataset pitch for the next meeting.
 
 **Feb 18 — Dataset Pitching Meeting:** Each member presents a candidate dataset:
 - Jesper → Anthropic Economic Index
@@ -89,7 +89,7 @@ A running record of what the team has built and when. Updated as the project pro
 
 **Apr 21 — Extended Stand-up (45 min):** Meeting to discuss progress of Adarsh, Yenus, Kevine, and David on ML work. Discussed integration with the Flask skeleton. **Final models confirmed.**
 
-**Apr 23 (Today) — Coworking Session (2:00–4:00 PM, Room 2.30):**
+**Apr 23 — Coworking Session:**
 
 Task split for the session:
 - **Marci & Jesper** — side map, design document based on last stand-up
@@ -99,16 +99,78 @@ Task split for the session:
 
 Marci also attending Prof. Dimmery's office hours.
 
+**Apr 24:** PR #35 (Adarsh's literature summaries) merged.
+ 
+**Apr 30:**
+- Adarsh prepares the SVM pipeline notebook and serialises pickle files + feature JSON for the Flask app (PR #40).
+- Jesper integrates logistic regression into the Flask app as an initial wired-up model.
+- PR #38 (Jesper's skeleton work) merged by Yenus.
+- PR #40 (SVM model upload) merged by Adarsh.
+---
+ 
+## May 2026 — Tests, CI, and Final Refinements
+ 
+**May 1:** PR #27 (Luis's patch) merged. Marci resolves outstanding review comments.
+ 
+**May 2:** Marci pushes interim app progress — prediction and explorer pages taking shape.
+
+**May 4:** Marci adds a pytest test suite and a GitHub Actions YML file for CI. Fixes to the prediction and explorer pages; pytest integrated into the `uv` workflow. This closes the "Set up test suite" and "CI" items from the to-do list.
+ 
+**May 6:**
+- Adarsh updates the README and benchmarks the project against the rubric (PR #48, merged). Citations reformatted closer to APA style.
+
+**May 7 – Coworking Session:**
+- PR #42 (feat/ml-integration) merged by Marci.
+- PR #44 (tests) merged by Marci.
+- Survey respondent count corrected in `home.html`.
+- Luis and Adarsh attended Prof. Dimmery's office hours to gather feedback to the app and input for the presentation
+- Extensive internal feedback session to features and flask app
+
+
+**May 9:** Adarsh sets up temporary Cloudflare tunnel to demo the live app to the team. Team member reviews it on mobile - no issues, slight load time on the explorer page noted (acceptable given it queries the Parquet directly; team decides not to refactor the dataloader at this stage).
+
+**May 10 — PR #50 opened (Final Refinements), by Marci:**
+ 
+A comprehensive polish and model-swap PR. Highlights:
+
+- **ManualSVM replaces logistic regression** — satisfying the rubric requirement. Risk scoring via `sigmoid(decision_score)`; thresholds low < 40%, moderate 40–60%, high > 60%. `retrain_svm.py` included for regenerating artifacts.
+- **Predictions form:** BMI replaced with height + weight fields and metric/imperial toggle; preferences persist via `localStorage`. Form state and results persist across navigation. Tooltip hints added to key fields. Quit-smoking suggestion always shown for current smokers.
+- **Details page:** SVM weight chart replaces odds ratio chart. Population comparison table shows readable categorical benchmarks; alcohol added. CDC resources section added.
+- **Explorer page:** Charts highlight the user's position from their last prediction, with a toggle to show/hide.
+- **Home page:** Map prevalence computed from BRFSS parquet instead of hardcoded values. Animated zoom to southern belt on scroll. Respondent count corrected to 450,000+.
+- **Tests:** All 75 tests passing.
+
+Marci also shares `CLEANUP.md`, `DOCS.md`, and `TODO.md` with the team.
+
+**May 11 — Final fixes to PR #50:**
+- Smoking delta numbers hidden from the suggestion UI — model signal for this feature deemed unreliable; tests updated to match.
+- fix: chart label cutoff, consistent sidebar on home page, imperial form repopulation
+
+**May 11 — Team meeting:**
+- Spun up Cloudflare and walked through the live app together 
+- Discussed the app demo, the general presentation structure
+- README
+- Repo cleanup.
+
+**May 12 - Final Presentation prep:**
+- Merge PR #51 (README.md update to reflect refinements)
+- Done with the presentation slides preparation
+
+**May 13 - Final Presentation & Individual retrospectives:**
+- Each member writes individual retrospectives (each team member, 1 page)
+- Final presentation done
+
+**OVER AND OUT GUYS...GOOD JOB TO EVERYONE**
+
 ---
 
 ## Models & ML Decisions
 
 | Model | Notes |
 |---|---|
-| Random Forest | Strong baseline, interpretable feature importance |
-| XGBoost | Top performer in literature |
-| GBM (Gradient Boosting Machine) | Good benchmark alongside XGBoost |
-| SFM (Select From Model) | Feature selection step, not a standalone model |
+| ManualSVM | **Live model — from-scratch implementation required by rubric. Risk via sigmoid(decision_score).** |
+| GBM (Gradient Boosting Machine) | Trained and evaluated during model selection phase |
+| SFM (Select From Model) | Feature selection step |
 
 **Primary metric:** F1-score and PR-AUC (recall prioritized — false negatives are costly in a medical context)
 
@@ -116,16 +178,4 @@ Marci also attending Prof. Dimmery's office hours.
 
 ---
 
-## Still To Do
-
-- [ ] Implement final ML algorithm from scratch (no external ML libraries for core implementation — rubric requirement)
-- [ ] Wire real data and model outputs into Flask routes
-- [ ] Build interactive visualizations (Plotly / Chart.js / D3)
-- [ ] Complete side map and design document (Marci & Jesper)
-- [ ] Set up test suite (pytest)
-- [ ] Set up CI (GitHub Actions)
-- [ ] Write individual retrospectives (each team member, 1 page)
-
----
-
-*Last updated: April 23, 2026*
+*Last updated: May 13, 2026*
