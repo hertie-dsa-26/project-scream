@@ -152,6 +152,15 @@ Marci also shares `CLEANUP.md`, `DOCS.md`, and `TODO.md` with the team.
 - README
 - Repo cleanup.
 
+**May 12 - Final Presentation prep:**
+- Merge PR #51 (README.md update to reflect refinements)
+- Done with the presentation slides preparation
+
+**May 13 - Final Presentation & Individual retrospectives:**
+- Each member writes individual retrospectives (each team member, 1 page)
+- Final presentation done
+
+**OVER AND OUT GUYS...GOOD JOB TO EVERYONE**
 
 ---
 
@@ -171,9 +180,8 @@ Marci also shares `CLEANUP.md`, `DOCS.md`, and `TODO.md` with the team.
 
 ## Still To Do
 
-- [ ] Merge PR #51 (README.md update to reflect refinements)
-- [ ] Write individual retrospectives (each team member, 1 page)
+- [ ] 
 
 ---
 
-*Last updated: May 11, 2026*
+*Last updated: May 13, 2026*
